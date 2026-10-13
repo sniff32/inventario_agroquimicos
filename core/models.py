@@ -267,3 +267,36 @@ class SalePayment(models.Model):
 
     class Meta:
         ordering = ("created_at", "pk")
+
+
+class Greenhouse(models.Model):
+    """Instalación monitoreada, independiente del almacén de mercancía."""
+    code = models.CharField(max_length=24, unique=True)
+    name = models.CharField(max_length=120)
+    crop = models.CharField(max_length=120, blank=True)
+    description = models.CharField(max_length=250, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_demo = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ("code",)
+
+    def __str__(self):
+        return self.name
+
+
+class GreenhouseReading(models.Model):
+    greenhouse = models.ForeignKey(Greenhouse, on_delete=models.CASCADE, related_name="readings")
+    recorded_at = models.DateTimeField(db_index=True)
+    temperature = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+    humidity = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+    soil_moisture = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+    light_lux = models.PositiveIntegerField(null=True, blank=True)
+    tank_level = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+    irrigation_on = models.BooleanField(default=False)
+    ventilation_on = models.BooleanField(default=False)
+    is_demo = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ("-recorded_at",)
+        indexes = [models.Index(fields=("greenhouse", "-recorded_at"), name="greenhouse_reading_recent_idx")]
