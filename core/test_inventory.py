@@ -135,7 +135,7 @@ class InventoryFlowTests(TestCase):
         for _ in range(2):
             response = self.client.post(url, {"action": "demo", "return_to": "panel"})
             self.assertEqual(response.status_code, 302)
-        self.assertEqual(Product.objects.filter(is_demo=True, sku__startswith="ABR-").count(), 50)
+        self.assertEqual(Product.objects.filter(is_demo=True, sku__startswith="AGR-").count(), 50)
         self.assertEqual(Branch.objects.filter(is_demo=True).count(), 1)
         self.assertEqual(StockMovement.objects.filter(kind="DEMO", reference="ABARROTES-DEMO").count(), 50)
 
