@@ -21,7 +21,7 @@ from .inventory_services import apply_stock, transfer_stock
 from .models import Branch, BranchStockMinimum, Category, Product, Sale, StockBalance, StockMovement, StorageLocation
 from .stock_alerts import breakdown, snapshot
 
-SECTIONS = {"panel", "productos", "sucursales", "movimientos", "historial", "ventas", "finanzas"}
+SECTIONS = {"panel", "productos", "sucursales", "movimientos", "historial", "ventas", "finanzas", "invernaderos"}
 
 
 def can_move(user):
