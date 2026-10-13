@@ -8,11 +8,12 @@ from core.inventory_views import download_template, inventory_action
 from core.sale_views import sale_action, sale_docx
 from core.sale_lookup import search_sale_products, sale_product_detail
 from core.finance_views import finance_action
-from core.greenhouse_views import load_greenhouse_demo
+from core.greenhouse_views import load_greenhouse_demo, greenhouse_simulation_api
 
 urlpatterns = [
     path("", home, name="home"),
     path("salud/", health, name="health"),
+    path("invernaderos/simulacion/", greenhouse_simulation_api, name="greenhouse_simulation"),
     path("invernaderos/demo/", load_greenhouse_demo, name="greenhouse_demo"),
     path("ventas/accion/", sale_action, name="sale_action"),
     path("finanzas/accion/", finance_action, name="finance_action"),
