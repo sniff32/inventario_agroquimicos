@@ -58,6 +58,9 @@ def home(request):
     if section == "finanzas":
         from .finance_services import financial_context
         context = {"active_section": "finanzas", **financial_context()}
+    elif section == "invernaderos":
+        from .greenhouse_views import greenhouse_context
+        context = greenhouse_context()
     elif section == "ventas":
         from .inventory_views import can_move
         from .sale_views import sales_context
