@@ -1,0 +1,166 @@
+<div class="eyebrow">FERMO · OPERACIONES COMERCIALES</div>
+<h1>Ventas y órdenes</h1>
+<p class="muted">Prepara órdenes en una sola sucursal, consulta existencias antes de vender y calcula el descuento escalonado automáticamente. El inventario solo cambia al confirmar.</p>
+
+{% if sale_selected %}
+  <section class="panel-block sale-receipt" id="venta-confirmada">
+    <div class="panel-title">
+      <h2>Orden {{ sale_selected.number }}</h2>
+      <a class="btn primary" href="{% url 'sale_docx' sale_selected.pk %}">↓ Descargar orden Word</a>
+    </div>
+    <div class="receipt-summary">
+      <div><small>Cliente</small><strong>{{ sale_selected.customer_name }}</strong></div>
+      <div><small>Forma de pago</small><strong>{{ sale_selected.get_payment_term_display }}</strong></div>
+      <div><small>Modalidad</small><strong>{{ sale_selected.get_sale_type_display }}</strong></div>
+      <div><small>Folio y fecha</small><strong>{{ sale_selected.number }} · {{ sale_selected.created_at|date:"d/m/Y H:i" }}</strong></div>
+      <div><small>Sucursal</small><strong>{{ sale_selected.branch.name }}</strong></div>
+      <div><small>Fecha de salida</small><strong>{{ sale_selected.delivery_date|date:"d/m/Y" }}</strong></div>
+      <div><small>Vendedor</small><strong>{{ sale_selected.created_by.username }}</strong></div>
+    </div>
+    <div class="table-scroll">
+      <table class="users-table">
+        <thead><tr><th>SKU</th><th>Producto</th><th>Ubicación</th><th>Cantidad</th><th>Precio base</th><th>Descuento</th><th>Precio final</th><th>Importe</th></tr></thead>
+        <tbody>{% for item in sale_selected.items.all %}
+        <tr><td>{{ item.sku_snapshot }}</td><td>{{ item.name_snapshot }}<small class="account-detail">{{ item.get_sale_type_display }}</small></td><td>{{ item.location.code }}</td><td>{{ item.quantity }}</td><td>${{ item.base_unit_price|floatformat:2 }}</td><td>{{ item.discount_percent }}%</td><td>${{ item.unit_price|floatformat:2 }}</td><td>${{ item.line_total|floatformat:2 }}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+    <div class="sale-totals"><span>Subtotal sin descuentos</span><strong>${{ sale_selected.gross_subtotal|floatformat:2 }}</strong><span>Descuento acumulado</span><strong class="savings">− ${{ sale_selected.discount_total|floatformat:2 }}</strong><span>Total final</span><strong class="grand-total">${{ sale_selected.subtotal|floatformat:2 }} MXN</strong></div>
+    <p class="form-hint">Documento comercial interno; no sustituye una factura ni CFDI. No se calculan impuestos.</p>
+  </section>
+{% endif %}
+
+<div class="sales-two-column">
+  <section class="panel-block">
+    <div class="panel-title"><h2>Agregar al carrito</h2><span class="pill">Productos con existencias</span></div>
+    <form method="post" action="{% url 'sale_action' %}" class="quick-form sales-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <label for="sale-type">Modalidad de este artículo</label>
+      <select id="sale-type" name="sale_type" required>
+        <option value="MENUDEO">Menudeo — precio normal</option>
+        <option value="MAYOREO">Mayoreo — precio por volumen</option>
+      </select>
+      <div id="fermo-sale-picker"
+        data-search-url="{% url 'sale_search' %}"
+        data-detail-prefix="/ventas/producto/"
+        data-cart-branch="{{ sales_cart.branch_id|default_if_none:'' }}">
+        <label for="sale-product-search">Buscar producto por nombre, SKU, marca o categoría</label>
+        <input id="sale-product-search" type="search" placeholder="Ej. DS18B20, cable USB, DEMO-018..." autocomplete="off" aria-autocomplete="list" aria-controls="sale-search-results">
+        <div id="sale-search-results" class="sale-search-results" role="listbox" aria-label="Productos disponibles" hidden></div>
+        <input type="hidden" id="sale-balance-id" name="balance_id" required>
+        <section id="sale-product-card" class="sale-product-inspector" hidden aria-live="polite">
+          <h3 id="sale-selected-name"></h3>
+          <div id="sale-product-info" class="sale-product-info"></div>
+          <details class="sale-branch-details sale-pricing-details">
+            <summary>Ver precios y condiciones de mayoreo</summary>
+            <div id="sale-extra-info" class="sale-extra-info"></div>
+          </details>
+          <details class="sale-branch-details">
+            <summary>Ver existencia en todas las sucursales</summary>
+            <div id="sale-other-branches"></div>
+          </details>
+        </section>
+        <label for="sale-quantity">Cantidad</label>
+        <input id="sale-quantity" type="number" name="quantity" min="1" max="100000000" value="1" required>
+        <p id="sale-product-warning" class="sale-live-warning" role="status" hidden></p>
+        <button id="sale-add-button" type="submit" class="btn primary" disabled>+ Agregar producto a la orden</button>
+      </div>
+      {{ raw_cart_lines|json_script:"sale-cart-raw" }}
+      {% load static %}
+      <script defer src="{% static 'js/sales.js' %}"></script>
+    </form>
+    <p class="form-hint"><strong>Puedes combinar menudeo y mayoreo en el mismo carrito.</strong> Elige la modalidad antes de añadir cada artículo. Los productos deben salir de una sola sucursal.</p>
+    <p class="form-hint">Mayoreo de prueba: 2% extra por cada 10 unidades de un mismo artículo, hasta 10%, sobre el precio mayorista configurado en <a href="{% url 'home' %}?seccion=productos">Productos → Editar</a>.</p>
+  </section>
+
+  <section class="panel-block">
+    <div class="panel-title">
+      <h2>Carrito de la orden</h2>
+      <span class="pill">{{ sales_cart.lines|length }} renglones · {{ sales_cart.sale_type|title }}</span>
+    </div>
+    {% if sales_cart.lines %}
+      <p class="muted small">Sucursal de la orden: <strong>{{ cart_branch_name }}</strong> · Puedes combinar menudeo y mayoreo; la sucursal debe ser la misma para toda la orden.</p>
+      {% for warning in sales_cart.warnings %}<div class="notice error">{{ warning }}</div>{% endfor %}
+      <div class="table-scroll">
+        <table class="users-table">
+          <thead><tr><th>Producto</th><th>Uds.</th><th>Precio base</th><th>Descuento</th><th>Precio final</th><th>Importe</th><th></th></tr></thead>
+          <tbody>
+            {% for row in sales_cart.lines %}
+              <tr>
+                <td><strong>{{ row.product.name }}</strong><small class="account-detail">{{ row.product.sku }} · {{ row.location.code }}</small><span class="sale-mode-tag {% if row.sale_type == 'MAYOREO' %}wholesale{% endif %}">{{ row.sale_type_label }}</span></td>
+                <td>{{ row.quantity }}</td>
+                <td>${{ row.base_unit_price|floatformat:2 }}</td>
+                <td><span class="discount-chip">{{ row.discount_percent }}%</span></td>
+                <td>${{ row.unit_price|floatformat:2 }}</td>
+                <td>${{ row.line_total|floatformat:2 }}</td>
+                <td>
+                  <form method="post" action="{% url 'sale_action' %}">
+                    {% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="index" value="{{ row.index }}">
+                    <button class="btn subtle btn-compact" type="submit" aria-label="Quitar {{ row.product.name }}">Quitar</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="sale-totals"><span>Subtotal sin descuentos</span><strong>${{ sales_cart.gross_subtotal|floatformat:2 }}</strong><span>Descuento aplicado</span><strong class="savings">− ${{ sales_cart.discount_total|floatformat:2 }}</strong><span>Total de la orden</span><strong class="grand-total">${{ sales_cart.subtotal|floatformat:2 }} MXN</strong></div>
+      <form method="post" action="{% url 'sale_action' %}" class="clear-sale">
+        {% csrf_token %}<input type="hidden" name="action" value="clear">
+        <button class="btn danger-outline" type="submit">Vaciar carrito</button>
+      </form>
+      <div class="checkout-section">
+        <h3>Confirmar venta y datos del cliente</h3>
+        <p class="form-hint">Los productos todavía NO se han descontado. Se registrarán juntos al confirmar la orden. Un renglón de mayoreo por debajo del mínimo queda pendiente y no permite confirmar hasta completarlo.</p>
+        <form method="post" action="{% url 'sale_action' %}" class="quick-form" onsubmit="return confirm('¿Confirmar venta, asignar folio y descontar todos los productos del inventario?')">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="checkout">
+          <label for="customer-name">Cliente / Razón social *</label>
+          <input id="customer-name" name="customer_name" maxlength="180" required placeholder="Nombre de persona o empresa">
+          <label for="customer-contact">Contacto (opcional)</label>
+          <input id="customer-contact" name="customer_contact" maxlength="120" placeholder="Teléfono o correo del cliente">
+          <label for="delivery-date">Fecha de salida / entrega *</label>
+          <input id="delivery-date" name="delivery_date" type="date" value="{{ sale_today }}" required>
+          <label for="sale-payment-term">Condiciones de pago *</label>
+          <select id="sale-payment-term" name="payment_term" required>
+            <option value="CONTADO">Contado · cobrada al confirmar</option>
+            {% if user.is_superuser %}<option value="CREDITO">Crédito · cuenta por cobrar</option>{% endif %}
+          </select>
+          {% if user.is_superuser %}
+          <label for="sale-due">Vencimiento del crédito (solo si se eligió crédito)</label>
+          <input id="sale-due" type="date" name="due_date">
+          {% endif %}
+          <label for="sale-note">Observaciones (opcional)</label>
+          <textarea id="sale-note" name="note" maxlength="255" rows="2" placeholder="Referencia, instrucciones de entrega, etc."></textarea>
+          <button type="submit" class="btn primary" {% if sales_cart.warnings %}disabled title="Revisa las advertencias del carrito"{% endif %}>Confirmar orden y descontar inventario</button>
+        </form>
+      </div>
+    {% else %}
+      <p class="muted">El carrito está vacío. Selecciona un producto, su sucursal y la cantidad para comenzar una orden.</p>
+    {% endif %}
+  </section>
+</div>
+
+<section class="panel-block sales-history">
+  <div class="panel-title"><h2>Órdenes confirmadas</h2><span class="pill">Últimas 70</span></div>
+  <form method="get" class="filter-bar">
+    <input type="hidden" name="seccion" value="ventas">
+    {% if user.is_superuser %}<label class="low-filter"><input type="checkbox" name="historicas" value="1" {% if sales_archived %}checked{% endif %}> Incluir ventas de la simulación anterior</label>{% endif %}
+    <label class="sr-only" for="find-order">Buscar orden</label>
+    <input id="find-order" type="search" name="buscar" value="{{ sales_query }}" placeholder="Buscar folio o cliente">
+    <button class="btn subtle" type="submit">Buscar</button>
+  </form>
+  <div class="table-scroll">
+    <table class="users-table">
+      <thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Sucursal</th><th>Vendedor</th><th>Total</th><th></th></tr></thead>
+      <tbody>
+        {% for sale in sales_rows %}
+          <tr><td><strong>{{ sale.number }}</strong></td><td>{{ sale.created_at|date:"d/m/Y H:i" }}</td><td>{{ sale.customer_name }}</td><td>{{ sale.get_sale_type_display }}</td><td>{{ sale.branch.name }}</td><td>{{ sale.created_by.username }}</td><td>${{ sale.subtotal|floatformat:2 }}</td>
+            <td><a class="text-link" href="{% url 'home' %}?seccion=ventas&amp;ver={{ sale.pk }}">Ver orden</a></td>
+          </tr>
+        {% empty %}<tr><td colspan="8">Aún no hay ventas confirmadas.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
