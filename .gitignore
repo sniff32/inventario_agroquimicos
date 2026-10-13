@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Archivos generados de Django (no subir)
+staticfiles/
+media/
+.env.*
+!.env.example
