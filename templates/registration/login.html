@@ -4,12 +4,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Iniciar sesión | FERMO</title>
+  <title>Iniciar sesión | AGROQUÍMICOS</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body class="login-screen">
   <main class="login-card">
-    <div class="fermo-login-brand"><img src="{% static 'img/fermo-logo.svg' %}" alt="Fermo Comercializadora y distribuidora S.A. de C.V."><span>Inventarios · Almacenes · Ventas</span></div>
+    <div class="fermo-login-brand"><span class="agro-brand-symbol" aria-hidden="true">✳</span><span>Inventarios · Almacenes · Ventas</span></div>
     <h1>Bienvenido de nuevo</h1>
     <p class="muted">Ingresa con tu cuenta autorizada para acceder al sistema.</p>
     {% if form.errors %}<div class="notice error" role="alert">Usuario o contraseña incorrectos. Verifica tus datos.</div>{% endif %}
