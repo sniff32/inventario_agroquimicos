@@ -501,3 +501,9 @@ body { background:#f2f7f1; }
 .gh-alert{color:#9d3c28;background:#fff0e9;border-radius:8px;padding:9px;font-size:.84rem}
 @media(max-width:1050px){.gh-grid{grid-template-columns:1fr}}
 @media(max-width:650px){.gh-summary{grid-template-columns:1fr}.gh-card{padding:16px}.gh-metrics{gap:7px}.gh-metrics>div{padding:10px}}
+
+.gh-demo-actions{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 22px;border:1px solid #a8d3b5;background:#e9f6ed;border-radius:14px;margin:18px 0}
+.gh-demo-actions p{font-size:.83rem;color:#4b6855;margin:5px 0 0}
+.gh-demo-actions form{flex-shrink:0}
+.gh-status.gh-demo{background:#e5effb;color:#315c87;font-weight:700}
+@media(max-width:720px){.gh-demo-actions{flex-direction:column;align-items:stretch}.gh-demo-actions .btn{width:100%}}
