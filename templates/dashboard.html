@@ -1,0 +1,138 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FERMO | Inventarios y ventas</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="fermo-brand" href="{% url 'home' %}" aria-label="Fermo · Panel principal"><img src="{% static 'img/fermo-logo.svg' %}" alt="Fermo Comercializadora y distribuidora S.A. de C.V."><span>Sistema de inventarios y ventas</span></a>
+      <nav aria-label="Menú principal">
+        <a class="{% if active_section == 'panel' %}nav-active{% endif %}" href="{% url 'home' %}">▦ &nbsp; Panel general</a>
+        <a class="{% if active_section == 'productos' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=productos">▤ &nbsp; Productos</a>
+        <a class="{% if active_section == 'sucursales' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=sucursales">▥ &nbsp; Almacén</a>
+        <a class="{% if active_section == 'movimientos' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=movimientos">⇆ &nbsp; Movimientos</a>
+        <a class="{% if active_section == 'historial' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=historial">◷ &nbsp; Historial</a>
+        {% if user.is_superuser or user_is_employee %}<a class="{% if active_section == 'ventas' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=ventas">▣ &nbsp; Ventas y órdenes</a>{% endif %}
+        {% if user.is_superuser %}
+          <div class="nav-heading">FINANZAS</div>
+          <a class="{% if active_section == 'finanzas' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=finanzas">▤ &nbsp; Finanzas y cuentas</a>
+          <div class="nav-heading">ADMINISTRACIÓN</div>
+          <a class="{% if active_section == 'administracion' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=administracion">⚙ &nbsp; Usuarios y accesos</a>
+        {% endif %}
+      </nav>
+      <div class="sidebar-foot">FERMO <span>·</span> Inventario y ventas</div>
+    </aside>
+    <div class="content">
+      <header class="topbar">
+        <span>{% if active_section == 'administracion' %}Administración de usuarios{% elif active_section == 'productos' %}Productos{% elif active_section == 'sucursales' %}Almacén{% elif active_section == 'movimientos' %}Movimientos{% elif active_section == 'historial' %}Historial{% elif active_section == 'finanzas' %}Finanzas y cuentas{% elif active_section == 'ventas' %}Ventas y órdenes{% else %}Panel de control{% endif %}</span>
+        <div class="account">
+          <span>{{ user.get_full_name|default:user.username }}</span>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="btn subtle">Cerrar sesión</button></form>
+        </div>
+      </header>
+      <main class="main">
+        {% for message in messages %}
+          <div class="notice {% if message.tags == 'success' %}success{% else %}error{% endif %}" role="status">{{ message }}</div>
+        {% endfor %}
+        {% if active_section == 'finanzas' and user.is_superuser %}
+          {% include 'finance/content.html' %}
+        {% elif active_section == 'administracion' and user.is_superuser %}
+          <div class="eyebrow">ADMINISTRACIÓN · ACCESO EXCLUSIVO</div>
+          <h1>Usuarios y accesos</h1>
+          <p class="muted">Agrega cuentas, asigna un tipo de usuario, cambia contraseñas y suspende accesos. Todo desde el panel principal de la empresa.</p>
+
+          <div class="users-layout">
+            <section class="panel-block">
+              <div class="panel-title"><h2>Crear usuario</h2><span class="pill">Solo administrador</span></div>
+              <form method="post" action="{% url 'manage_users' %}" class="user-create-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+                {% if create_form.non_field_errors %}<div class="notice error">{{ create_form.non_field_errors }}</div>{% endif %}
+                <div class="form-field"><label for="{{ create_form.username.id_for_label }}">Usuario</label>{{ create_form.username }}{{ create_form.username.errors }}</div>
+                <div class="form-grid">
+                  <div class="form-field"><label for="{{ create_form.first_name.id_for_label }}">Nombre</label>{{ create_form.first_name }}{{ create_form.first_name.errors }}</div>
+                  <div class="form-field"><label for="{{ create_form.last_name.id_for_label }}">Apellidos</label>{{ create_form.last_name }}{{ create_form.last_name.errors }}</div>
+                </div>
+                <div class="form-field"><label for="{{ create_form.email.id_for_label }}">Correo electrónico</label>{{ create_form.email }}{{ create_form.email.errors }}</div>
+                <div class="form-field"><label for="{{ create_form.role.id_for_label }}">Tipo de cuenta</label>{{ create_form.role }}{{ create_form.role.errors }}</div>
+                <div class="form-field"><label for="{{ create_form.password1.id_for_label }}">Contraseña</label>{{ create_form.password1 }}{{ create_form.password1.errors }}</div>
+                <div class="form-field"><label for="{{ create_form.password2.id_for_label }}">Confirmar contraseña</label>{{ create_form.password2 }}{{ create_form.password2.errors }}</div>
+                <p class="form-hint">Usa una contraseña larga y única. Las contraseñas se almacenan como hashes protegidos, nunca en texto legible.</p>
+                <button type="submit" class="btn primary">+ Crear cuenta</button>
+              </form>
+            </section>
+            <section class="panel-block">
+              <div class="panel-title"><h2>Cuentas registradas</h2><span class="pill">{{ user_rows|length }} en total</span></div>
+              <p class="muted small">Los cambios se aplican al guardar. No se eliminan cuentas: se pueden desactivar para conservar su historial.</p>
+              <div class="table-scroll">
+                <table class="users-table">
+                  <thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                  <tbody>
+                  {% for row in user_rows %}
+                    <tr>
+                      <td><strong>{{ row.account.username }}</strong><span class="account-detail">{{ row.account.email }}</span></td>
+                      <td>{{ row.role }}</td>
+                      <td>{% if row.account.is_active %}<span class="status-label active">Activo</span>{% else %}<span class="status-label inactive">Suspendido</span>{% endif %}</td>
+                      <td>
+                        <details class="account-actions">
+                          <summary>Gestionar</summary>
+                          <div class="actions-panel">
+                            <h3>{{ row.account.username }}</h3>
+                            <form method="post" action="{% url 'manage_users' %}" class="small-form">
+                              {% csrf_token %}
+                              <input type="hidden" name="action" value="password">
+                              <input type="hidden" name="user_id" value="{{ row.account.pk }}">
+                              <label for="newpass-{{ row.account.pk }}">Nueva contraseña</label>
+                              <input type="password" id="newpass-{{ row.account.pk }}" name="new_password1" autocomplete="new-password" required minlength="8">
+                              <label for="confirm-{{ row.account.pk }}">Confirmar contraseña</label>
+                              <input type="password" id="confirm-{{ row.account.pk }}" name="new_password2" autocomplete="new-password" required minlength="8">
+                              <button type="submit" class="btn subtle">Cambiar contraseña</button>
+                            </form>
+                            {% if row.account.pk != user.pk %}
+                              <form method="post" action="{% url 'manage_users' %}" class="small-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="role">
+                                <input type="hidden" name="user_id" value="{{ row.account.pk }}">
+                                <label for="role-{{ row.account.pk }}">Tipo de cuenta</label>
+                                <select name="role" id="role-{{ row.account.pk }}">
+                                  {% for value, label in role_choices %}
+                                    <option value="{{ value }}" {% if value == row.role %}selected{% endif %}>{{ label }}</option>
+                                  {% endfor %}
+                                </select>
+                                <button type="submit" class="btn subtle">Guardar rol</button>
+                              </form>
+                              <form method="post" action="{% url 'manage_users' %}" class="small-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="status">
+                                <input type="hidden" name="user_id" value="{{ row.account.pk }}">
+                                <button type="submit" class="btn {% if row.account.is_active %}danger-outline{% else %}subtle{% endif %}">{% if row.account.is_active %}Desactivar acceso{% else %}Reactivar acceso{% endif %}</button>
+                              </form>
+                            {% else %}
+                              <p class="form-hint">Tu propio rol y estado están protegidos para evitar perder el acceso.</p>
+                            {% endif %}
+                          </div>
+                        </details>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="4">Todavía no hay cuentas registradas.</td></tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="notice info small"><strong>Roles iniciales:</strong> administrador (gestión de usuarios), empleado e invitado. Los permisos específicos para movimientos y almacenes se configurarán al crear esos módulos.</div>
+            </section>
+          </div>
+        {% else %}
+          {% if active_section == "ventas" %}{% include "sales/content.html" %}{% else %}{% include "inventory/content.html" %}{% endif %}
+        {% endif %}
+      </main>
+    </div>
+  </div>
+</body>
+</html>
