@@ -29,8 +29,8 @@ class SalesFlowTests(TestCase):
         )
         self.employee.groups.add(Group.objects.get_or_create(name="Empleado")[0])
         self.guest.groups.add(Group.objects.get_or_create(name="Invitado")[0])
-        self.branch = Branch.objects.create(code="FER-01", name="Sucursal FERMO Centro")
-        self.other = Branch.objects.create(code="FER-02", name="Sucursal FERMO Norte")
+        self.branch = Branch.objects.create(code="FER-01", name="Sucursal AGRO Centro")
+        self.other = Branch.objects.create(code="FER-02", name="Sucursal AGRO Norte")
         self.loc = StorageLocation.objects.create(branch=self.branch, code="Repisa 2")
         self.other_loc = StorageLocation.objects.create(branch=self.other, code="Repisa 3")
         self.p1 = Product.objects.create(
