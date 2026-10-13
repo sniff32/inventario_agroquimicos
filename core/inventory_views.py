@@ -133,7 +133,7 @@ def inventory_context(request, section):
             "search_query": q,
             "product_form": ProductForm(),
             "category_form": CategoryForm(),
-            "demo_available": not products_base.filter(is_demo=True).exists(),
+            "demo_available": not products_base.filter(is_demo=True, sku__startswith="AGR-").exists(),
         })
 
     elif section == "sucursales":
