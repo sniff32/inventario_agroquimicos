@@ -16,7 +16,7 @@ LOGO = Path(settings.BASE_DIR) / "static" / "img" / "agro-logo.svg"
 
 
 def _logo_png():
-    """Renderiza la traza SVG del logotipo original con Pillow, sin binarios externos."""
+    """Renderiza la traza SVG del símbolo gráfico configurado con Pillow, sin binarios externos."""
     if not LOGO.exists():
         return None
     from PIL import Image, ImageChops, ImageDraw
@@ -37,7 +37,7 @@ def _logo_png():
         )
         mask = ImageChops.logical_xor(mask, poly)
     image = Image.new("RGB", mask.size, "#ffffff")
-    image.paste((213, 0, 6), (0, 0, mask.width, mask.height), mask)
+    image.paste((38, 117, 72), (0, 0, mask.width, mask.height), mask)
     out = BytesIO()
     image.save(out, format="PNG", optimize=True)
     out.seek(0)
