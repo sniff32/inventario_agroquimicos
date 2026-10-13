@@ -44,8 +44,8 @@ def _selected_branch(request):
 def inventory_context(request, section):
     branches = Branch.objects.filter(is_active=True)
     # Una sola operación comercial. Las sucursales viejas permanecen para auditoría.
-    if branches.filter(code="FERMO-ALMACEN").exists():
-        branches = branches.filter(code="FERMO-ALMACEN")
+    if branches.filter(code="AGRO-ALMACEN").exists():
+        branches = branches.filter(code="AGRO-ALMACEN")
     locations = StorageLocation.objects.select_related("branch").filter(
         is_active=True, branch__in=branches
     )
@@ -92,7 +92,7 @@ def inventory_context(request, section):
                     Value(0), output_field=IntegerField()
                 )
             ),
-            "demo_available": not products_base.filter(is_demo=True, sku__startswith="ABR-").exists(),
+            "demo_available": not products_base.filter(is_demo=True, sku__startswith="AGR-").exists(),
         })
         for b in context["branch_rows"]:
             b.low_count = len(report["branch_alerts"].get(b.pk, []))
@@ -261,13 +261,13 @@ def inventory_action(request):
 
     try:
         if action == "branch":
-            raise ValidationError("FERMO opera con un solo almacén; no se crean sucursales.")
+            raise ValidationError("AGROQUÍMICOS opera con un solo almacén; no se crean sucursales.")
         elif action == "location":
             selected = Branch.objects.filter(
-                pk=request.POST.get("branch"), code="FERMO-ALMACEN", is_active=True
+                pk=request.POST.get("branch"), code="AGRO-ALMACEN", is_active=True
             ).first()
             if not selected:
-                raise ValidationError("Selecciona el almacén FERMO para crear una ubicación.")
+                raise ValidationError("Selecciona el almacén AGROQUÍMICOS para crear una ubicación.")
             msg = _save_form(LocationForm(request.POST), "Estante agregado al almacén.")
         elif action == "category":
             msg = _save_form(CategoryForm(request.POST), "Categoría creada.")
