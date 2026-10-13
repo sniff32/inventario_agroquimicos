@@ -1,0 +1,35 @@
+name: Verificar Django
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  django-test:
+    runs-on: ubuntu-latest
+    env:
+      DEBUG: "true"
+      SECRET_KEY: "solo-para-pruebas-automatizadas-no-produccion"
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+      - name: Validar JavaScript del buscador
+        run: node --check static/js/sales.js
+      - name: Probar selección real de producto y alerta de stock
+        run: node tests/sales-ui-smoke.cjs
+      - name: Validar configuracion
+        run: python manage.py check
+      - name: Revisar SQL de la migracion comercial
+        run: python manage.py sqlmigrate core 0003 > /dev/null && python manage.py sqlmigrate core 0004 > /dev/null && python manage.py sqlmigrate core 0005 > /dev/null && python manage.py sqlmigrate core 0006 > /dev/null && python manage.py sqlmigrate core 0007 > /dev/null && python manage.py sqlmigrate core 0008 > /dev/null
+      - name: Preparar archivos estaticos para vistas de prueba
+        run: python manage.py collectstatic --noinput
+      - name: Ejecutar pruebas
+        run: python manage.py test
