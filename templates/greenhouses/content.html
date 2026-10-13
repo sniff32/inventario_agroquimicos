@@ -1,0 +1,30 @@
+<div class="eyebrow">MONITOREO AGRÍCOLA · CENTRO DE CONTROL</div>
+<h1>Invernaderos</h1>
+<p class="muted">Supervisa tus instalaciones automatizadas desde una sola plataforma. Las lecturas aparecen cuando se conecten los controladores.</p>
+<section class="gh-summary">
+  <article class="metric"><span>Invernaderos registrados</span><strong>{{ greenhouse_total }}</strong><small>Instalaciones</small></article>
+  <article class="metric"><span>Con telemetría reciente</span><strong>{{ greenhouse_online }}</strong><small>Últimos 5 minutos</small></article>
+  <article class="metric"><span>Alertas de referencia</span><strong>{{ greenhouse_alerts }}</strong><small>Requieren lecturas recientes</small></article>
+</section>
+<section class="gh-notice"><strong>Estado de integración</strong><p>Los cinco invernaderos son registros iniciales para el proyecto. Todavía no se ha conectado ningún controlador ni se han recibido lecturas reales. Los valores vacíos significan <b>sin datos</b>, no valores normales.</p></section>
+<section class="gh-grid">
+{% for item in greenhouse_rows %}
+  <article class="gh-card">
+    <div class="gh-card-head"><div><small>{{ item.greenhouse.code }}</small><h2>{{ item.greenhouse.name }}</h2></div><span class="gh-status {% if item.online %}gh-online{% endif %}">{% if item.online %}● En línea{% else %}○ Sin conexión{% endif %}</span></div>
+    {% if item.greenhouse.crop %}<p class="muted">Cultivo: {{ item.greenhouse.crop }}</p>{% endif %}
+    {% if item.alert %}<p class="gh-alert">Lectura fuera de rangos de referencia. Verifica en campo.</p>{% endif %}
+    <div class="gh-metrics">
+      <div><span>Temperatura</span><strong>{% if item.reading.temperature is not None %}{{ item.reading.temperature }} °C{% else %}—{% endif %}</strong></div>
+      <div><span>Humedad ambiente</span><strong>{% if item.reading.humidity is not None %}{{ item.reading.humidity }} %{% else %}—{% endif %}</strong></div>
+      <div><span>Humedad del suelo</span><strong>{% if item.reading.soil_moisture is not None %}{{ item.reading.soil_moisture }} %{% else %}—{% endif %}</strong></div>
+      <div><span>Luminosidad</span><strong>{% if item.reading.light_lux is not None %}{{ item.reading.light_lux }} lux{% else %}—{% endif %}</strong></div>
+      <div><span>Nivel del tanque</span><strong>{% if item.reading.tank_level is not None %}{{ item.reading.tank_level }} %{% else %}—{% endif %}</strong></div>
+      <div><span>Riego / Ventilación</span><strong>{% if item.online %}{% if item.reading.irrigation_on %}ON{% else %}OFF{% endif %} / {% if item.reading.ventilation_on %}ON{% else %}OFF{% endif %}{% else %}—{% endif %}</strong></div>
+    </div>
+    <div class="gh-card-foot">{% if item.reading %}Última lectura: {{ item.reading.recorded_at|date:"d/m/Y H:i" }}{% if item.reading.is_demo %} · DEMO{% endif %}{% else %}Sin lecturas registradas{% endif %}</div>
+  </article>
+{% empty %}
+  <div class="panel-block"><p>No hay invernaderos registrados.</p></div>
+{% endfor %}
+</section>
+<p class="muted small">Los estados se calculan al cargar la página. Actualiza el navegador para consultar de nuevo. Los umbrales de referencia no activan ni desactivan equipos.</p>
