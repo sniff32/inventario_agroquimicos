@@ -458,3 +458,25 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:650px){.finance-kpis{grid-template-columns:1fr 1fr}.finance-form{grid-template-columns:1fr}
 .finance-payment-form{grid-template-columns:1fr}.finance-payment-form .btn{width:100%}
 .catalog-edit-dialog{padding:16px}.finance-kpi{padding:14px}}
+
+
+/* Identidad neutra para tienda agrícola: verde, sin marca comercial. */
+:root { color:#18382a; background:#f2f7f1; --agro-green:#267548; --agro-dark:#123d2b; }
+body { background:#f2f7f1; }
+.sidebar { background:#123d2b; color:#e4f5e8; }
+.sidebar nav a,.sidebar .nav-pending,.sidebar .admin-link { color:#d1e9d7; }
+.sidebar nav a.nav-active { background:#246844; color:white; }
+.sidebar-foot,.admin-link { border-color:#356f50; color:#c0dfc9; }
+.nav-heading { color:#a3d4b0; }
+.btn.primary { background:#267548; color:#fff; }
+.btn.primary:hover { background:#185c37; }
+.brand-mark { background:#267548; }
+.eyebrow,.text-link,.account-actions summary { color:#267548; }
+.login-screen { background:radial-gradient(circle at 16% 12%,#d6f0da,transparent 45%),#f2f7f1; }
+.login-card,.panel-block,.metric,.welcome { border-color:#d7e7db; }
+.topbar { border-color:#d7e7db; }
+.demo-banner { border-color:#95cdaa; background:#e9f6ec; }
+.dropdown-panel[open]>summary { background:#e2f2e6; }
+.form-field input:focus,.form-field select:focus,.small-form input:focus,.small-form select:focus { outline-color:#8fc7a0; }
+.fermo-brand,.fermo-login-brand { display:flex; align-items:center; gap:12px; color:inherit; text-decoration:none; }
+.agro-brand-symbol { display:inline-grid;place-items:center;flex-shrink:0;width:43px;height:43px;border-radius:13px;background:#2c8452;color:#fff;font-weight:800;font-size:27px;box-shadow:inset 0 0 0 1px #ffffff20; }
