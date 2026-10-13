@@ -87,3 +87,13 @@ def load_greenhouse_demo(request):
             )
     messages.success(request, "Lecturas ficticias cargadas para los invernaderos de demostración.")
     return redirect("/?seccion=invernaderos")
+
+
+@login_required
+def greenhouse_simulation_api(request):
+    """Read-only JSON. Simulated values are never inserted as real device readings."""
+    from django.http import JsonResponse
+    from .greenhouse_simulation import simulation_snapshot
+    response = JsonResponse(simulation_snapshot())
+    response["Cache-Control"] = "no-store"
+    return response
