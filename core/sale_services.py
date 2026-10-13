@@ -300,7 +300,7 @@ def finalize_sale(request, *, customer_name, contact="", delivery_date=None, not
     kinds = {kind for _, _, _, kind, _ in prepared}
     sale_type = next(iter(kinds)) if len(kinds) == 1 else Sale.MIXED
 
-    seq, _ = SaleSequence.objects.select_for_update().get_or_create(name="FERMO")
+    seq, _ = SaleSequence.objects.select_for_update().get_or_create(name="AGROQUIMICOS")
     seq.last_number += 1
     seq.save(update_fields=["last_number"])
     folio = f"FER-VENTA-{seq.last_number:06d}"
