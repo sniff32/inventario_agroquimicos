@@ -507,3 +507,19 @@ body { background:#f2f7f1; }
 .gh-demo-actions form{flex-shrink:0}
 .gh-status.gh-demo{background:#e5effb;color:#315c87;font-weight:700}
 @media(max-width:720px){.gh-demo-actions{flex-direction:column;align-items:stretch}.gh-demo-actions .btn{width:100%}}
+
+/* Panel de simulación temporal y analítica */
+.gh-sim-toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px;background:#e8f5ec;border:1px solid #b6ddc2;padding:16px 20px;border-radius:14px;margin:22px 0}
+.gh-sim-toolbar strong{color:#1f663e}.gh-sim-toolbar p{color:#5a7964;font-size:.79rem;margin:4px 0 0}
+.gh-sim-controls{display:flex;align-items:center;gap:12px;font-size:.76rem;color:#456c55}
+.gh-pulse{display:inline-block;width:9px;height:9px;background:#258750;border-radius:50%;margin-right:7px;box-shadow:0 0 0 4px #9ed3ae}
+.gh-analytics{margin-top:25px}
+.gh-select-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0}
+.gh-select-row label{color:#52695a;font-size:.82rem}
+.gh-select-row select{border:1px solid #c9dbcf;border-radius:9px;padding:10px;background:#fff;font:inherit;color:#23442f;max-width:100%}
+.gh-chart-wrap{background:#f8fbf9;border:1px solid #e0eae2;border-radius:12px;padding:14px 8px}
+.gh-chart-wrap svg{display:block;width:100%;height:auto}
+.gh-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.gh-stats>div{padding:12px;border:1px solid #e0eae2;background:#f9fbf9;border-radius:10px;display:grid;gap:6px}
+.gh-stats small{color:#647b6c;font-size:.77rem}.gh-stats strong{font-size:1.13rem;color:#214a2e}
+@media(max-width:720px){.gh-sim-toolbar{flex-direction:column;align-items:stretch}.gh-sim-controls{justify-content:space-between}.gh-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
