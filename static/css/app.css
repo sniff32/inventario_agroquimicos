@@ -480,3 +480,24 @@ body { background:#f2f7f1; }
 .form-field input:focus,.form-field select:focus,.small-form input:focus,.small-form select:focus { outline-color:#8fc7a0; }
 .fermo-brand,.fermo-login-brand { display:flex; align-items:center; gap:12px; color:inherit; text-decoration:none; }
 .agro-brand-symbol { display:inline-grid;place-items:center;flex-shrink:0;width:43px;height:43px;border-radius:13px;background:#2c8452;color:#fff;font-weight:800;font-size:27px;box-shadow:inset 0 0 0 1px #ffffff20; }
+
+/* Centro de monitoreo de invernaderos */
+.gh-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:25px 0}
+.gh-summary .metric{margin:0}
+.gh-notice{padding:18px 22px;border:1px solid #b8d8c0;border-radius:14px;background:#edf7ee;color:#244b35;margin-bottom:24px}
+.gh-notice p{font-size:.85rem;margin:7px 0 0;line-height:1.5}
+.gh-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.gh-card{border:1px solid #dce6dc;border-radius:17px;background:white;padding:23px;min-width:0;box-shadow:0 7px 24px #173b2110}
+.gh-card-head{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.gh-card-head h2{font-size:1.25rem;margin:5px 0 8px}
+.gh-card-head small{font-size:.71rem;color:#637969;letter-spacing:.12em;font-weight:750}
+.gh-status{background:#f3f4f5;color:#646f66;font-size:.76rem;padding:7px 9px;border-radius:20px;white-space:nowrap}
+.gh-status.gh-online{background:#e0f4e5;color:#15713d}
+.gh-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:19px}
+.gh-metrics>div{background:#f6f9f6;border-radius:10px;padding:15px;display:grid;gap:6px;min-width:0}
+.gh-metrics span{color:#617368;font-size:.78rem}
+.gh-metrics strong{font-size:1.08rem;color:#1f392b}
+.gh-card-foot{margin-top:17px;font-size:.76rem;color:#718176;border-top:1px solid #eef2ee;padding-top:14px}
+.gh-alert{color:#9d3c28;background:#fff0e9;border-radius:8px;padding:9px;font-size:.84rem}
+@media(max-width:1050px){.gh-grid{grid-template-columns:1fr}}
+@media(max-width:650px){.gh-summary{grid-template-columns:1fr}.gh-card{padding:16px}.gh-metrics{gap:7px}.gh-metrics>div{padding:10px}}
