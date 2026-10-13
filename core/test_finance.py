@@ -1,4 +1,4 @@
-"""Pruebas de inventario de abarrotes, pagos y autorización financiera."""
+"""Pruebas de inventario de agroquímicos, pagos y autorización financiera."""
 from datetime import date
 from decimal import Decimal
 
@@ -37,13 +37,13 @@ class GroceryDemoTests(TestCase):
         created, moved = load_demo(actor=self.admin)
         self.assertEqual(created, 50)
         self.assertEqual(moved, 50)
-        self.assertEqual(Product.objects.filter(is_active=True, sku__startswith="ABR-").count(), 50)
+        self.assertEqual(Product.objects.filter(is_active=True, sku__startswith="AGR-").count(), 50)
         self.assertFalse(Product.objects.get(pk=old.pk).is_active)
         self.assertFalse(Branch.objects.get(pk=old_branch.pk).is_active)
         self.assertEqual(StockMovement.objects.filter(product=old).count(), 1)
         self.assertEqual(Branch.objects.filter(is_active=True).count(), 1)
         self.assertEqual(StockBalance.objects.filter(
-            product__sku__startswith="ABR-", quantity__gt=0
+            product__sku__startswith="AGR-", quantity__gt=0
         ).count(), 50)
         self.assertEqual(load_demo(actor=self.admin), (0, 0))
         self.assertEqual(StockMovement.objects.filter(reference="ABARROTES-DEMO").count(), 50)
@@ -51,7 +51,7 @@ class GroceryDemoTests(TestCase):
         page = self.client.get(reverse("home"), {"seccion": "productos"})
         self.assertContains(page, "Arroz blanco")
         self.assertNotContains(page, "Cable USB tipo B")
-        self.assertContains(page, "ABR-001")
+        self.assertContains(page, "AGR-001")
 
     def test_product_editor_uses_dialog_not_table_expanding_details(self):
         load_demo(actor=self.admin)
@@ -87,7 +87,7 @@ class GroceryDemoTests(TestCase):
         self.assertFalse(legacy.is_active)
         self.assertFalse(legacy_branch.is_active)
         self.assertEqual(Product.objects.filter(
-            is_active=True, sku__startswith="ABR-"
+            is_active=True, sku__startswith="AGR-"
         ).count(), 50)
         self.assertEqual(StockMovement.objects.filter(product=legacy).count(), 1)
         convert(apps, None)
@@ -116,10 +116,10 @@ class FinanceFlowTests(TestCase):
         )
         self.employee.groups.add(Group.objects.get_or_create(name="Empleado")[0])
         self.supplier = Supplier.objects.create(name="Proveedor del Valle")
-        self.warehouse = Branch.objects.create(code="FERMO-ALMACEN", name="Almacén FERMO")
+        self.warehouse = Branch.objects.create(code="AGRO-ALMACEN", name="Almacén AGRO")
         self.location = StorageLocation.objects.create(branch=self.warehouse, code="Pasillo A")
         self.product = Product.objects.create(
-            sku="ABR-123", name="Aceite vegetal 900 ml", cost=Decimal("30.00"),
+            sku="AGR-123", name="Aceite vegetal 900 ml", cost=Decimal("30.00"),
             price=Decimal("49.00"), wholesale_price=Decimal("40.00"), wholesale_min_qty=10
         )
         self.client.force_login(self.admin)
