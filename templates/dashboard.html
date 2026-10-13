@@ -4,13 +4,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FERMO | Inventarios y ventas</title>
+  <title>AGROQUÍMICOS | Inventarios y ventas</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
   <div class="shell">
     <aside class="sidebar">
-      <a class="fermo-brand" href="{% url 'home' %}" aria-label="Fermo · Panel principal"><img src="{% static 'img/fermo-logo.svg' %}" alt="Fermo Comercializadora y distribuidora S.A. de C.V."><span>Sistema de inventarios y ventas</span></a>
+      <a class="fermo-brand" href="{% url 'home' %}" aria-label="la tienda · Panel principal"><span class="agro-brand-symbol" aria-hidden="true">✳</span><span>Sistema de inventarios y ventas</span></a>
       <nav aria-label="Menú principal">
         <a class="{% if active_section == 'panel' %}nav-active{% endif %}" href="{% url 'home' %}">▦ &nbsp; Panel general</a>
         <a class="{% if active_section == 'productos' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=productos">▤ &nbsp; Productos</a>
@@ -25,7 +25,7 @@
           <a class="{% if active_section == 'administracion' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=administracion">⚙ &nbsp; Usuarios y accesos</a>
         {% endif %}
       </nav>
-      <div class="sidebar-foot">FERMO <span>·</span> Inventario y ventas</div>
+      <div class="sidebar-foot">AGROQUÍMICOS <span>·</span> Inventario y ventas</div>
     </aside>
     <div class="content">
       <header class="topbar">
