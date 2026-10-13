@@ -21,15 +21,15 @@
   <p class="muted">Indicadores actualizados desde la base de datos central de la tienda.</p>
   <section class="cards overview-cards">
     <article class="metric"><span>Productos registrados</span><strong>{{ count_products }}</strong><small>Códigos activos</small></article>
-    <article class="metric"><span>Unidades en inventario</span><strong>{{ count_units }}</strong><small>En el almacén AGROQUÍMICOS</small></article>
-    <article class="metric"><span>Almacén</span><strong>{{ count_branches }}</strong><small>Tiendas y almacenes</small></article>
+    <article class="metric"><span>Unidades en inventario</span><strong>{{ count_units }}</strong><small>En el almacén central</small></article>
+    <article class="metric"><span>Almacén</span><strong>{{ count_branches }}</strong><small>Único almacén central</small></article>
     <article class="metric"><span>Movimientos</span><strong>{{ count_movements }}</strong><small>Historial completo</small></article>
     {% if can_move %}<article class="metric"><span>Órdenes de venta</span><strong>{{ count_sales }}</strong><small>${{ sales_amount|floatformat:2 }} MXN vendidos</small><a class="text-link" href="{% url 'home' %}?seccion=ventas">Ver ventas →</a></article>{% endif %}
     <article class="metric alert-metric"><span><span class="alert-dot" aria-hidden="true"></span> Alertas de reposición</span><strong>{{ count_low }}</strong><small>Productos bajo mínimo · {{ count_low_products }} afectados</small></article>
   </section>
   <section class="panel-block stock-alert-overview" aria-label="Alertas de reposición por sucursal">
     <div class="panel-title"><h2><span class="alert-dot" aria-hidden="true"></span> Reposición por sucursal</h2><span class="pill">{{ count_low }} alertas de stock</span></div>
-    <p class="muted small">Se evalúan las existencias del almacén AGROQUÍMICOS según los mínimos de cada producto.</p>
+    <p class="muted small">Se evalúan las existencias del almacén central según los mínimos de cada producto.</p>
     <div class="branch-alert-grid">
       {% for branch in branch_rows %}
         <a class="branch-alert-card {% if branch.low_count %}has-low-stock{% endif %}" href="{% url 'home' %}?seccion=productos&amp;sucursal={{ branch.pk }}&amp;solo_bajo=1">
@@ -66,7 +66,7 @@
       {% for branch in branch_rows %}
         <div class="branch-line"><span>{{ branch.name }} {% if branch.is_demo %}<em>DEMO</em>{% endif %}</span><strong>{{ branch.units }} uds.</strong></div>
       {% empty %}
-        <p class="muted">Todavía no hay sucursales registradas.</p>
+        <p class="muted">El almacén central aún no está inicializado.</p>
       {% endfor %}
     </section>
     <section class="panel-block">
@@ -84,7 +84,7 @@
   </div>
   {% if can_manage_catalog and demo_available %}
     <section class="demo-banner">
-      <div><strong>Simulación para tienda de agroquímicos</strong><p>Carga 50 productos agrícolas ficticios en el almacén AGROQUÍMICOS. Conserva folios e historial anteriores.</p></div>
+      <div><strong>Simulación para tienda de agroquímicos</strong><p>Carga 50 productos agrícolas ficticios en el almacén central. Conserva folios e historial anteriores.</p></div>
       <form method="post" action="{% url 'inventory_action' %}" onsubmit="return confirm('Se cargarán 50 productos agrícolas de demostración; el historial se conserva. ¿Continuar?')">
         {% csrf_token %}<input type="hidden" name="action" value="demo"><input type="hidden" name="return_to" value="panel">
         <button class="btn primary" type="submit">Preparar 50 productos de agroquímicos</button>
@@ -95,7 +95,7 @@
 {% elif active_section == 'productos' %}
   <div class="eyebrow">CATÁLOGO GENERAL</div>
   <h1>Productos e inventario</h1>
-  <p class="muted">Catálogo de agroquímicos con costo, precios de venta y existencias en el almacén AGROQUÍMICOS.</p>
+  <p class="muted">Catálogo de agroquímicos con costo, precios de venta y existencias en el almacén central.</p>
   <div class="action-strip">
     {% if can_manage_catalog %}
       <a class="btn subtle" href="{% url 'inventory_template' %}">↓ Plantilla Excel</a>
@@ -201,7 +201,7 @@
                 <div class="product-detail-panel">
                   <div class="detail-heading">
                     <strong>Existencias y ubicación de {{ item.product.name }}</strong>
-                    <small>{% if selected_branch %}Detalle de la sucursal seleccionada{% else %}Todas las sucursales · la alerta se calcula individualmente{% endif %}</small>
+                    <small>{% if selected_branch %}Detalle del almacén central{% else %}Existencias del almacén central{% endif %}</small>
                   </div>
                   <div class="product-store-grid">
                     {% for store in item.stores %}
@@ -250,7 +250,7 @@
 {% elif active_section == 'sucursales' %}
   <div class="eyebrow">OPERACIÓN CENTRALIZADA</div>
   <h1>Almacén principal</h1>
-  <p class="muted">La distribuidora opera desde un solo almacén. Organiza pasillos, estantes y zonas sin crear sucursales adicionales.</p>
+  <p class="muted">La tienda opera desde un solo almacén central. Organiza pasillos, estantes y zonas sin crear sucursales adicionales.</p>
   {% if can_manage_catalog %}
     <div class="action-strip">
       <details class="dropdown-panel"><summary class="btn subtle">+ Nueva ubicación</summary>
@@ -341,12 +341,12 @@
 {% elif active_section == 'historial' %}
   <div class="eyebrow">TRAZABILIDAD Y AUDITORÍA</div>
   <h1>Historial de movimientos</h1>
-  <p class="muted">Consulta quién movió cada artículo del almacén AGROQUÍMICOS, fecha, cantidad anterior y existencia final. Los datos de la simulación antigua se conservan archivados.</p>
+  <p class="muted">Consulta quién movió cada artículo del almacén central, fecha, cantidad anterior y existencia final. Los datos de la simulación antigua se conservan archivados.</p>
   <form method="get" class="filter-bar history-filters">
     <input type="hidden" name="seccion" value="historial">
     {% if user.is_superuser %}<label class="low-filter"><input type="checkbox" name="archivados" value="1" {% if history_archived %}checked{% endif %}> Incluir DEMO históricos archivados</label>{% endif %}
     <input type="search" name="q" value="{{ history_query }}" placeholder="Producto o código">
-    <select name="sucursal"><option value="">Todas las sucursales</option>{% for branch in branches %}<option value="{{ branch.pk }}" {% if selected_branch.pk == branch.pk %}selected{% endif %}>{{ branch.name }}</option>{% endfor %}</select>
+    <select name="sucursal"><option value="">Almacén central</option>{% for branch in branches %}<option value="{{ branch.pk }}" {% if selected_branch.pk == branch.pk %}selected{% endif %}>{{ branch.name }}</option>{% endfor %}</select>
     <select name="usuario"><option value="">Todos los usuarios</option>{% for u in history_users %}<option value="{{ u.pk }}" {% if history_user == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select>
     <select name="tipo"><option value="">Todos los movimientos</option>{% for val, label in history_types %}<option value="{{ val }}" {% if history_kind == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
     <label class="date-label">Desde<input type="date" name="desde" value="{{ history_start }}"></label>
