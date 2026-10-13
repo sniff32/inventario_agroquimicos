@@ -11,8 +11,8 @@ from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Inches, Pt, RGBColor
 
-COMPANY_NAME = "Fermo Comercializadora y Distribuidora S.A. de C.V."
-LOGO = Path(settings.BASE_DIR) / "static" / "img" / "fermo-logo.svg"
+COMPANY_NAME = "Tienda de Agroquímicos"
+LOGO = Path(settings.BASE_DIR) / "static" / "img" / "agro-logo.svg"
 
 
 def _logo_png():
@@ -191,7 +191,7 @@ def build_sale_docx(sale):
     _run(p, sale.created_by.get_full_name() or sale.created_by.username, size=8.5)
     p = document.add_paragraph()
     _run(p,
-         "FERMO · Documento de control comercial interno, no es factura ni CFDI. "
+         "AGROQUÍMICOS · Documento de control comercial interno, no es factura ni CFDI. "
          "Los importes no incluyen cálculo o desglose de impuestos; "
          "validar condiciones comerciales y fiscales antes de su uso oficial.",
          size=7, color=muted)
