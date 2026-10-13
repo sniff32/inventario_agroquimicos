@@ -138,7 +138,7 @@ class BranchStockMinimum(models.Model):
 
 class SaleSequence(models.Model):
     """Folio continuo de operaciones confirmadas con bloqueo en PostgreSQL."""
-    name = models.CharField(max_length=20, primary_key=True, default="FERMO")
+    name = models.CharField(max_length=20, primary_key=True, default="AGROQUÍMICOS")
     last_number = models.PositiveIntegerField(default=0)
 
 
@@ -213,7 +213,7 @@ class Supplier(models.Model):
 
 
 class Customer(models.Model):
-    name = models.CharField("Cliente o abarrotera", max_length=180, unique=True)
+    name = models.CharField("Cliente o productor", max_length=180, unique=True)
     contact = models.CharField(max_length=120, blank=True)
     phone = models.CharField(max_length=60, blank=True)
     is_active = models.BooleanField(default=True)
