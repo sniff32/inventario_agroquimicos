@@ -138,7 +138,7 @@ class BranchStockMinimum(models.Model):
 
 class SaleSequence(models.Model):
     """Folio continuo de operaciones confirmadas con bloqueo en PostgreSQL."""
-    name = models.CharField(max_length=20, primary_key=True, default="AGROQUÍMICOS")
+    name = models.CharField(max_length=20, primary_key=True, default="AGROQUIMICOS")
     last_number = models.PositiveIntegerField(default=0)
 
 
