@@ -1,0 +1,132 @@
+<div class="eyebrow">FERMO · DISTRIBUCIÓN DE ABARROTES</div>
+<h1>Finanzas y cuentas</h1>
+<p class="muted">Registra compras a proveedores, pagos y créditos de tus clientes. Todas las cantidades están en MXN y se guardan con usuario, fecha y referencia.</p>
+
+<div class="finance-kpis">
+  <a href="#cuentas-pagar" class="finance-kpi"><span>Por pagar a proveedores</span><strong>${{ accounts_payable|floatformat:2 }}</strong><small>Compras a crédito sin liquidar</small></a>
+  <a href="#cuentas-cobrar" class="finance-kpi"><span>Por cobrar a clientes</span><strong>${{ accounts_receivable|floatformat:2 }}</strong><small>Ventas a crédito pendientes</small></a>
+  <div class="finance-kpi"><span>Cobros registrados</span><strong>${{ cash_received|floatformat:2 }}</strong><small>Cobros de ventas clasificadas</small></div>
+  <div class="finance-kpi"><span>Pagos registrados</span><strong>${{ cash_paid|floatformat:2 }}</strong><small>Salidas a proveedores</small></div>
+</div>
+
+<nav class="finance-links" aria-label="Secciones de finanzas">
+  <a href="#recepciones">+ Compra de mercancía</a>
+  <a href="#cuentas-pagar">Cuentas por pagar</a>
+  <a href="#cuentas-cobrar">Cuentas por cobrar</a>
+  <a href="#proveedores">Proveedores y clientes</a>
+</nav>
+
+<div class="finance-notice">
+  <strong>Control financiero operativo, no contabilidad fiscal.</strong>
+  Las compras añaden mercancía al inventario. Las ventas confirmadas descuentan mercancía y registran su forma de pago. No se generan CFDI ni se calcula IVA; los importes son los capturados en cada operación.
+  {% if unclassified_sales %}<p>Hay {{ unclassified_sales }} ventas de versiones anteriores sin forma de pago registrada. No se consideran pagadas ni adeudadas automáticamente.</p>{% endif %}
+</div>
+
+<section class="panel-block" id="recepciones">
+  <div class="panel-title"><h2>Recepción de mercancía y compra a proveedor</h2><span class="pill">Solo administrador</span></div>
+  <p class="muted small">Registra el costo, proveedor y plazo de pago. Al guardar, se suman las unidades al almacén y se actualiza el último costo del artículo. Cada formulario registra un solo producto; puedes repetir la operación para más artículos.</p>
+  <form method="post" action="{% url 'finance_action' %}" class="finance-form">
+    {% csrf_token %}<input type="hidden" name="action" value="purchase">
+    <label>Proveedor *<select required name="supplier_id"><option value="">Elegir proveedor...</option>{% for p in suppliers %}<option value="{{ p.pk }}">{{ p.name }}</option>{% endfor %}</select></label>
+    <label>Producto *<select required name="product_id"><option value="">Elegir producto...</option>{% for p in buyable_products %}<option value="{{ p.pk }}">{{ p.sku }} · {{ p.name }}</option>{% endfor %}</select></label>
+    <label>Ubicación de recepción *<select required name="location_id"><option value="">Elegir estante...</option>{% for loc in warehouse_locations %}<option value="{{ loc.pk }}">{{ loc.code }}</option>{% endfor %}</select></label>
+    <label>Cantidad *<input required type="number" min="1" max="100000000" step="1" name="quantity" value="10"></label>
+    <label>Costo unitario de adquisición (MXN) *<input required type="number" min="0.01" step="0.01" name="unit_cost" placeholder="Ej. 18.50"></label>
+    <label>Condición de compra *<select required name="term"><option value="CONTADO">Pagada de contado</option><option value="CREDITO">A crédito · por pagar</option></select></label>
+    <label>Fecha límite (solo crédito)<input type="date" name="due_date"></label>
+    <label>Factura o referencia del proveedor<input name="reference" maxlength="80" placeholder="Ej. FAC-00023"></label>
+    <label class="wide">Observaciones<input name="note" maxlength="255" placeholder="Lote, recepción, transportista..."></label>
+    <div class="wide"><button class="btn primary" type="submit" onclick="return confirm('¿Confirmar recepción, costo y condición de pago?')">Registrar compra y actualizar inventario</button></div>
+  </form>
+</section>
+
+<div class="finance-columns">
+<section class="panel-block" id="cuentas-pagar">
+  <div class="panel-title"><h2>Cuentas por pagar</h2><span class="pill">{{ payables|length }} pendientes visibles</span></div>
+  <p class="muted small">Compras registradas a proveedores. Se permite abonar o liquidar, nunca pagar más que el saldo.</p>
+  {% for p in payables %}
+    <div class="account-line">
+      <div class="account-line-head"><strong>#{{ p.pk }} · {{ p.supplier.name }}</strong><span class="status-label inactive">Debe ${{ p.balance|floatformat:2 }}</span></div>
+      <small>{{ p.product.name }} · {{ p.quantity }} uds. · Total ${{ p.total|floatformat:2 }} · Vence {{ p.due_date|date:"d/m/Y"|default:"Sin fecha" }}</small>
+      <form action="{% url 'finance_action' %}" method="post" class="finance-payment-form">
+        {% csrf_token %}<input type="hidden" name="action" value="pay"><input type="hidden" name="purchase_id" value="{{ p.pk }}">
+        <input type="number" step="0.01" min="0.01" max="{{ p.balance }}" required name="amount" value="{{ p.balance }}" aria-label="Importe de abono a proveedor">
+        <input type="text" name="reference" maxlength="80" placeholder="Referencia de pago">
+        <button class="btn primary" type="submit">Registrar abono</button>
+      </form>
+    </div>
+  {% empty %}<p class="muted">No hay cuentas por pagar registradas.</p>{% endfor %}
+</section>
+
+<section class="panel-block" id="cuentas-cobrar">
+  <div class="panel-title"><h2>Cuentas por cobrar</h2><span class="pill">{{ receivables|length }} pendientes visibles</span></div>
+  <p class="muted small">Saldos de abarroteras a las que se les vendió a crédito. Los abonos se vinculan al folio original.</p>
+  {% for sale in receivables %}
+    <div class="account-line">
+      <div class="account-line-head"><strong>{{ sale.customer_name }}</strong><span class="status-label inactive">Debe ${{ sale.balance|floatformat:2 }}</span></div>
+      <small>{{ sale.number }} · Venta ${{ sale.subtotal|floatformat:2 }} · Vence {{ sale.due_date|date:"d/m/Y"|default:"Sin fecha" }}</small>
+      <form action="{% url 'finance_action' %}" method="post" class="finance-payment-form">
+        {% csrf_token %}<input type="hidden" name="action" value="collect"><input type="hidden" name="sale_id" value="{{ sale.pk }}">
+        <input type="number" step="0.01" min="0.01" max="{{ sale.balance }}" required name="amount" value="{{ sale.balance }}" aria-label="Importe del cobro">
+        <input type="text" name="reference" maxlength="80" placeholder="Referencia de cobro">
+        <button class="btn primary" type="submit">Registrar cobro</button>
+      </form>
+    </div>
+  {% empty %}<p class="muted">No hay clientes con saldos pendientes registrados.</p>{% endfor %}
+</section>
+</div>
+
+<div class="finance-columns" id="proveedores">
+<section class="panel-block">
+  <div class="panel-title"><h2>Alta de proveedor</h2></div>
+  <form method="post" action="{% url 'finance_action' %}" class="quick-form">
+    {% csrf_token %}<input type="hidden" name="action" value="supplier">
+    <label>Razón social o nombre *</label><input required name="name" maxlength="180">
+    <label>Contacto</label><input name="contact" maxlength="120">
+    <label>Teléfono</label><input name="phone" maxlength="60">
+    <button class="btn primary" type="submit">+ Registrar proveedor</button>
+  </form>
+  <p class="form-hint">Proveedores registrados: {% for p in suppliers %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% empty %}ninguno{% endfor %}.</p>
+</section>
+<section class="panel-block">
+  <div class="panel-title"><h2>Alta de cliente (abarrotera)</h2></div>
+  <form method="post" action="{% url 'finance_action' %}" class="quick-form">
+    {% csrf_token %}<input type="hidden" name="action" value="customer">
+    <label>Negocio o cliente *</label><input required name="name" maxlength="180">
+    <label>Contacto</label><input name="contact" maxlength="120">
+    <label>Teléfono</label><input name="phone" maxlength="60">
+    <button class="btn primary" type="submit">+ Registrar cliente</button>
+  </form>
+  <p class="form-hint">Clientes registrados: {% for c in customers %}{{ c.name }}{% if not forloop.last %}, {% endif %}{% empty %}ninguno{% endfor %}.</p>
+</section>
+</div>
+
+<section class="panel-block" id="historial-financiero">
+  <div class="panel-title"><h2>Historial de compras y pagos</h2><span class="pill">Compras registradas</span></div>
+  <div class="table-scroll"><table class="users-table">
+    <thead><tr><th>Compra</th><th>Fecha</th><th>Proveedor</th><th>Producto</th><th>Total</th><th>Pagado</th><th>Pendiente</th><th>Condición</th></tr></thead>
+    <tbody>
+      {% for p in purchases %}<tr>
+        <td>#{{ p.pk }} · {{ p.reference }}</td><td>{{ p.created_at|date:"d/m/Y H:i" }}</td>
+        <td>{{ p.supplier.name }}</td><td>{{ p.product.name }} · {{ p.quantity }}</td>
+        <td>${{ p.total|floatformat:2 }}</td><td>${{ p.paid|floatformat:2 }}</td>
+        <td>${{ p.balance|floatformat:2 }}</td><td>{{ p.get_term_display }}</td>
+      </tr>{% empty %}<tr><td colspan="8">Todavía no hay compras registradas.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+<section class="panel-block">
+  <div class="panel-title"><h2>Ventas y cobros</h2><span class="pill">Ventas con cobro identificado</span></div>
+  <div class="table-scroll"><table class="users-table">
+    <thead><tr><th>Folio</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Cobrado</th><th>Pendiente</th><th>Forma de pago</th></tr></thead>
+    <tbody>
+    {% for sale in finance_sales %}<tr>
+      <td>{{ sale.number }}</td><td>{{ sale.customer_name }}</td>
+      <td>{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+      <td>${{ sale.subtotal|floatformat:2 }}</td>
+      <td>${{ sale.paid|floatformat:2 }}</td><td>${{ sale.balance|floatformat:2 }}</td>
+      <td>{{ sale.get_payment_term_display }}</td>
+    </tr>{% empty %}<tr><td colspan="7">Todavía no hay ventas con modalidad de cobro registrada.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
