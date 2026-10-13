@@ -17,6 +17,7 @@
         <a class="{% if active_section == 'sucursales' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=sucursales">▥ &nbsp; Almacén</a>
         <a class="{% if active_section == 'movimientos' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=movimientos">⇆ &nbsp; Movimientos</a>
         <a class="{% if active_section == 'historial' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=historial">◷ &nbsp; Historial</a>
+        <a class="{% if active_section == 'invernaderos' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=invernaderos">♧ &nbsp; Invernaderos</a>
         {% if user.is_superuser or user_is_employee %}<a class="{% if active_section == 'ventas' %}nav-active{% endif %}" href="{% url 'home' %}?seccion=ventas">▣ &nbsp; Ventas y órdenes</a>{% endif %}
         {% if user.is_superuser %}
           <div class="nav-heading">FINANZAS</div>
@@ -29,7 +30,7 @@
     </aside>
     <div class="content">
       <header class="topbar">
-        <span>{% if active_section == 'administracion' %}Administración de usuarios{% elif active_section == 'productos' %}Productos{% elif active_section == 'sucursales' %}Almacén{% elif active_section == 'movimientos' %}Movimientos{% elif active_section == 'historial' %}Historial{% elif active_section == 'finanzas' %}Finanzas y cuentas{% elif active_section == 'ventas' %}Ventas y órdenes{% else %}Panel de control{% endif %}</span>
+        <span>{% if active_section == 'administracion' %}Administración de usuarios{% elif active_section == 'productos' %}Productos{% elif active_section == 'sucursales' %}Almacén{% elif active_section == 'movimientos' %}Movimientos{% elif active_section == 'historial' %}Historial{% elif active_section == 'invernaderos' %}Invernaderos{% elif active_section == 'finanzas' %}Finanzas y cuentas{% elif active_section == 'ventas' %}Ventas y órdenes{% else %}Panel de control{% endif %}</span>
         <div class="account">
           <span>{{ user.get_full_name|default:user.username }}</span>
           <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="btn subtle">Cerrar sesión</button></form>
@@ -39,7 +40,9 @@
         {% for message in messages %}
           <div class="notice {% if message.tags == 'success' %}success{% else %}error{% endif %}" role="status">{{ message }}</div>
         {% endfor %}
-        {% if active_section == 'finanzas' and user.is_superuser %}
+        {% if active_section == 'invernaderos' %}
+          {% include 'greenhouses/content.html' %}
+        {% elif active_section == 'finanzas' and user.is_superuser %}
           {% include 'finance/content.html' %}
         {% elif active_section == 'administracion' and user.is_superuser %}
           <div class="eyebrow">ADMINISTRACIÓN · ACCESO EXCLUSIVO</div>
