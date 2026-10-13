@@ -1,36 +1,32 @@
+{% load static %}
 <div class="eyebrow">MONITOREO AGRÍCOLA · CENTRO DE CONTROL</div>
 <h1>Invernaderos</h1>
-<p class="muted">Supervisa tus instalaciones automatizadas desde una sola plataforma. Las lecturas aparecen cuando se conecten los controladores.</p>
-<section class="gh-summary">
-  <article class="metric"><span>Invernaderos registrados</span><strong>{{ greenhouse_total }}</strong><small>Instalaciones</small></article>
-  <article class="metric"><span>Con telemetría reciente</span><strong>{{ greenhouse_online }}</strong><small>Últimos 5 minutos</small></article>
-  <article class="metric"><span>Alertas de referencia</span><strong>{{ greenhouse_alerts }}</strong><small>Requieren lecturas recientes</small></article>
-</section>
-{% if user.is_superuser %}
-<section class="gh-demo-actions">
-<div><strong>Simulación de cinco invernaderos</strong><p>Genera lecturas ficticias para presentar el panel. No representan sensores conectados.</p></div>
-<form method="post" action="{% url 'greenhouse_demo' %}">{% csrf_token %}<button type="submit" class="btn primary">Cargar datos ficticios</button></form>
-</section>
-{% endif %}
-<section class="gh-notice"><strong>Estado de integración</strong><p>Los valores marcados DEMO son simulados. No se han conectado controladores reales; los espacios vacíos significan ausencia de datos.</p></section>
-<section class="gh-grid">
-{% for item in greenhouse_rows %}
-  <article class="gh-card">
-    <div class="gh-card-head"><div><small>{{ item.greenhouse.code }}</small><h2>{{ item.greenhouse.name }}</h2></div><span class="gh-status {% if item.online %}gh-online{% endif %}">{% if item.online %}● En línea{% elif item.reading.is_demo %}◇ DEMO{% else %}○ Sin conexión{% endif %}</span></div>
-    {% if item.greenhouse.crop %}<p class="muted">Cultivo: {{ item.greenhouse.crop }}</p>{% endif %}
-    {% if item.alert %}<p class="gh-alert">Lectura fuera de rangos de referencia. Verifica en campo.</p>{% endif %}
-    <div class="gh-metrics">
-      <div><span>Temperatura</span><strong>{% if item.reading.temperature is not None %}{{ item.reading.temperature }} °C{% else %}—{% endif %}</strong></div>
-      <div><span>Humedad ambiente</span><strong>{% if item.reading.humidity is not None %}{{ item.reading.humidity }} %{% else %}—{% endif %}</strong></div>
-      <div><span>Humedad del suelo</span><strong>{% if item.reading.soil_moisture is not None %}{{ item.reading.soil_moisture }} %{% else %}—{% endif %}</strong></div>
-      <div><span>Luminosidad</span><strong>{% if item.reading.light_lux is not None %}{{ item.reading.light_lux }} lux{% else %}—{% endif %}</strong></div>
-      <div><span>Nivel del tanque</span><strong>{% if item.reading.tank_level is not None %}{{ item.reading.tank_level }} %{% else %}—{% endif %}</strong></div>
-      <div><span>Riego / Ventilación</span><strong>{% if item.online or item.reading.is_demo %}{% if item.reading.irrigation_on %}ON{% else %}OFF{% endif %} / {% if item.reading.ventilation_on %}ON{% else %}OFF{% endif %}{% else %}—{% endif %}</strong></div>
-    </div>
-    <div class="gh-card-foot">{% if item.reading %}Última lectura: {{ item.reading.recorded_at|date:"d/m/Y H:i" }}{% if item.reading.is_demo %} · DEMO{% endif %}{% else %}Sin lecturas registradas{% endif %}</div>
-  </article>
-{% empty %}
-  <div class="panel-block"><p>No hay invernaderos registrados.</p></div>
-{% endfor %}
-</section>
-<p class="muted small">Los estados se calculan al cargar la página. Actualiza el navegador para consultar de nuevo. Los umbrales de referencia no activan ni desactivan equipos.</p>
+<p class="muted">Monitoreo centralizado de cinco instalaciones. Las mediciones siguientes son <strong>100 % simuladas</strong> y cambian de acuerdo con el tiempo.</p>
+<div id="gh-live-simulation" data-api="{% url 'greenhouse_simulation' %}">
+  <div class="gh-sim-toolbar">
+    <div><strong><span class="gh-pulse"></span> Simulación dinámica activa</strong><p>Datos sintéticos · Sin conexión a sensores físicos</p></div>
+    <div class="gh-sim-controls"><span id="gh-updated">Preparando simulación…</span><button class="btn subtle" type="button" id="gh-refresh">Actualizar</button></div>
+  </div>
+  <section class="gh-summary">
+    <article class="metric"><span>Invernaderos simulados</span><strong id="gh-total">5</strong><small>Instalaciones de ejemplo</small></article>
+    <article class="metric"><span>Temperatura promedio</span><strong id="gh-average">—</strong><small>Promedio de las 5 zonas</small></article>
+    <article class="metric"><span>Condiciones de atención</span><strong id="gh-alert-count">—</strong><small>Alertas ficticias, no operativas</small></article>
+  </section>
+  <section class="gh-grid" id="gh-sim-cards">
+    {% for item in greenhouse_rows %}
+    <article class="gh-card">
+      <div class="gh-card-head"><div><small>{{ item.greenhouse.code }}</small><h2>{{ item.greenhouse.name }}</h2></div><span class="gh-status gh-demo">SIMULACIÓN</span></div>
+      <p class="muted">Preparando datos de demostración…</p>
+    </article>
+    {% endfor %}
+  </section>
+  <section class="panel-block gh-analytics">
+    <div class="panel-title"><div><div class="eyebrow">ANALÍTICA DE TELEMETRÍA SIMULADA</div><h2>Historial y estadísticas</h2></div><span class="pill">Ventana de 24 horas</span></div>
+    <p class="muted small">Gráficas y métricas calculadas con señales sintéticas. No son registros de dispositivos reales ni sirven para decisiones agronómicas.</p>
+    <div class="gh-select-row"><label for="gh-chart-house">Invernadero</label><select id="gh-chart-house">{% for item in greenhouse_rows %}<option value="{{ item.greenhouse.code }}">{{ item.greenhouse.name }}</option>{% endfor %}</select><label for="gh-chart-metric">Variable</label><select id="gh-chart-metric"><option value="temperature">Temperatura (°C)</option><option value="humidity">Humedad ambiente (%)</option><option value="soil_moisture">Humedad del suelo (%)</option><option value="tank_level">Nivel de tanque (%)</option><option value="light_lux">Luz (lux)</option></select></div>
+    <div class="gh-chart-wrap"><svg id="gh-trend-svg" viewBox="0 0 900 280" role="img" aria-label="Gráfica histórica de telemetría simulada"></svg></div>
+    <div class="gh-stats" id="gh-stats"><span>Esperando datos para generar estadísticas…</span></div>
+  </section>
+  <p class="muted small">Actualización automática cada 30 segundos, únicamente mientras esta página esté abierta. Las señales cambian por ciclos matemáticos; no se insertan en la tabla de telemetría real ni se ejecutan acciones de control.</p>
+</div>
+<script defer src="{% static 'js/greenhouse-simulation.js' %}"></script>
