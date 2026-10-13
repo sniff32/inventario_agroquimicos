@@ -1,0 +1,375 @@
+{% if active_section == 'panel' %}
+  <section class="fermo-dashboard-hero" aria-label="Centro de operaciones">
+    <div class="hero-copy">
+      <span class="hero-eyebrow">FERMO · CENTRO DE OPERACIONES</span>
+      <h1>Resumen operativo</h1>
+      <p>Consulta tus existencias, revisa alertas y registra operaciones desde un solo lugar.</p>
+    </div>
+    <div class="hero-actions">
+      {% if can_move %}<a href="{% url 'home' %}?seccion=ventas" class="btn hero-btn">+ Nueva venta</a>{% endif %}
+      <a href="{% url 'home' %}?seccion=productos" class="btn hero-outline">Ver inventario</a>
+    </div>
+  </section>
+  <section class="fermo-quick-actions" aria-label="Accesos rápidos">
+    <a href="{% url 'home' %}?seccion=productos"><span class="quick-icon">▦</span><span><strong>Catálogo</strong><small>Buscar artículos</small></span><span>↗</span></a>
+    <a href="{% url 'home' %}?seccion=sucursales"><span class="quick-icon">⌂</span><span><strong>Almacén</strong><small>Ubicaciones</small></span><span>↗</span></a>
+    {% if can_move %}<a href="{% url 'home' %}?seccion=movimientos"><span class="quick-icon">⇄</span><span><strong>Movimientos</strong><small>Recibir y trasladar</small></span><span>↗</span></a>{% endif %}
+    <a href="{% url 'home' %}?seccion=historial"><span class="quick-icon">◷</span><span><strong>Historial</strong><small>Auditoría completa</small></span><span>↗</span></a>
+  </section>
+  <div class="eyebrow">RESUMEN EN TIEMPO REAL</div>
+  <h2 class="section-headline">Resumen general</h2>
+  <p class="muted">Indicadores actualizados desde la base de datos central de Fermo.</p>
+  <section class="cards overview-cards">
+    <article class="metric"><span>Productos registrados</span><strong>{{ count_products }}</strong><small>Códigos activos</small></article>
+    <article class="metric"><span>Unidades en inventario</span><strong>{{ count_units }}</strong><small>En el almacén FERMO</small></article>
+    <article class="metric"><span>Almacén</span><strong>{{ count_branches }}</strong><small>Tiendas y almacenes</small></article>
+    <article class="metric"><span>Movimientos</span><strong>{{ count_movements }}</strong><small>Historial completo</small></article>
+    {% if can_move %}<article class="metric"><span>Órdenes de venta</span><strong>{{ count_sales }}</strong><small>${{ sales_amount|floatformat:2 }} MXN vendidos</small><a class="text-link" href="{% url 'home' %}?seccion=ventas">Ver ventas →</a></article>{% endif %}
+    <article class="metric alert-metric"><span><span class="alert-dot" aria-hidden="true"></span> Alertas de reposición</span><strong>{{ count_low }}</strong><small>Productos bajo mínimo · {{ count_low_products }} afectados</small></article>
+  </section>
+  <section class="panel-block stock-alert-overview" aria-label="Alertas de reposición por sucursal">
+    <div class="panel-title"><h2><span class="alert-dot" aria-hidden="true"></span> Reposición por sucursal</h2><span class="pill">{{ count_low }} alertas de stock</span></div>
+    <p class="muted small">Se evalúan las existencias del almacén FERMO según los mínimos de cada producto.</p>
+    <div class="branch-alert-grid">
+      {% for branch in branch_rows %}
+        <a class="branch-alert-card {% if branch.low_count %}has-low-stock{% endif %}" href="{% url 'home' %}?seccion=productos&amp;sucursal={{ branch.pk }}&amp;solo_bajo=1">
+          <span class="branch-alert-name">{{ branch.name }}</span>
+          {% if branch.low_count %}
+            <span class="alert-dot" aria-hidden="true"></span>
+            <strong>{{ branch.low_count }}</strong>
+            <small>{{ branch.empty_count }} agotados · ver productos →</small>
+          {% else %}
+            <strong class="all-good">0</strong>
+            <small>Sin alertas · ver inventario →</small>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+    {% if low_alerts %}
+      <div class="panel-title alert-subtitle"><h3>Productos que requieren atención</h3><span class="pill">Primeras 12 alertas</span></div>
+      <div class="replenishment-list">
+        {% for alert in low_alerts %}
+          <a href="{% url 'home' %}?seccion=productos&amp;sucursal={{ alert.branch_id }}&amp;q={{ alert.product_sku|urlencode }}">
+            <span class="alert-dot" aria-hidden="true"></span>
+            <span><strong>{{ alert.product_name }}</strong><small>{{ alert.branch_name }} · {{ alert.product_sku }}</small></span>
+            <span class="replenish-amount {% if alert.empty %}sold-out{% endif %}">{% if alert.empty %}Agotado{% else %}{{ alert.quantity }} / mín. {{ alert.minimum }}{% endif %}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="muted">No hay artículos por debajo de sus mínimos.</p>
+    {% endif %}
+  </section>
+  <div class="module-grid">
+    <section class="panel-block">
+      <div class="panel-title"><h2>Existencias del almacén</h2><a class="text-link" href="{% url 'home' %}?seccion=sucursales">Ver almacén →</a></div>
+      {% for branch in branch_rows %}
+        <div class="branch-line"><span>{{ branch.name }} {% if branch.is_demo %}<em>DEMO</em>{% endif %}</span><strong>{{ branch.units }} uds.</strong></div>
+      {% empty %}
+        <p class="muted">Todavía no hay sucursales registradas.</p>
+      {% endfor %}
+    </section>
+    <section class="panel-block">
+      <div class="panel-title"><h2>Actividad reciente</h2><a class="text-link" href="{% url 'home' %}?seccion=historial">Ver historial →</a></div>
+      {% for move in recent_movements %}
+        <div class="activity-line">
+          <span class="move-icon {% if move.delta < 0 %}negative{% endif %}">{% if move.delta > 0 %}+{% else %}−{% endif %}</span>
+          <div><strong>{{ move.product.name }}</strong><small>{{ move.get_kind_display }} · {{ move.location.branch.name }} · {{ move.actor.username }} · {{ move.created_at|date:"d/m H:i" }}</small></div>
+          <b>{{ move.delta|stringformat:"+d" }}</b>
+        </div>
+      {% empty %}
+        <p class="muted">Aún no se registran movimientos.</p>
+      {% endfor %}
+    </section>
+  </div>
+  {% if can_manage_catalog and demo_available %}
+    <section class="demo-banner">
+      <div><strong>Simulación para distribuidora de abarrotes</strong><p>Retira del catálogo activo las muestras de electrónica y carga 50 abarrotes en el almacén FERMO. Conserva folios e historial anteriores.</p></div>
+      <form method="post" action="{% url 'inventory_action' %}" onsubmit="return confirm('Se desactivarán las muestras anteriores y se cargarán 50 abarrotes ficticios; el historial se conserva. ¿Continuar?')">
+        {% csrf_token %}<input type="hidden" name="action" value="demo"><input type="hidden" name="return_to" value="panel">
+        <button class="btn primary" type="submit">Preparar 50 productos de abarrotes</button>
+      </form>
+    </section>
+  {% endif %}
+
+{% elif active_section == 'productos' %}
+  <div class="eyebrow">CATÁLOGO GENERAL</div>
+  <h1>Productos e inventario</h1>
+  <p class="muted">Catálogo de abarrotes con costo, precios de venta y existencias en el almacén FERMO.</p>
+  <div class="action-strip">
+    {% if can_manage_catalog %}
+      <a class="btn subtle" href="{% url 'inventory_template' %}">↓ Plantilla Excel</a>
+      <details class="dropdown-panel"><summary class="btn subtle">Importar desde Excel</summary>
+        <form method="post" enctype="multipart/form-data" action="{% url 'inventory_action' %}" class="quick-form">
+          {% csrf_token %}<input type="hidden" name="action" value="import"><input type="hidden" name="return_to" value="productos">
+          <p class="form-hint">Archivo .xlsx, máximo 500 filas. La columna cantidad indica existencia FINAL en esa ubicación. Las diferencias se guardan como ajustes auditables.</p>
+          <label>Archivo Excel</label><input type="file" name="archivo" accept=".xlsx" required>
+          <button class="btn primary" type="submit">Importar inventario</button>
+        </form>
+      </details>
+      <details class="dropdown-panel"><summary class="btn primary">+ Nuevo producto</summary>
+        <form method="post" action="{% url 'inventory_action' %}" class="quick-form">
+          {% csrf_token %}<input type="hidden" name="action" value="product"><input type="hidden" name="return_to" value="productos">
+          <label>Código (SKU) *</label><input name="sku" maxlength="64" required>
+          <label>Nombre *</label><input name="name" maxlength="180" required>
+          <label>Categoría</label><select name="category"><option value="">Sin categoría</option>{% for cat in categories %}<option value="{{ cat.pk }}">{{ cat.name }}</option>{% endfor %}</select>
+          <label>Marca</label><input name="brand" maxlength="100">
+          <label>Unidad *</label><input name="unit" value="pieza" maxlength="30" required>
+          <label>Precio menudeo</label><input name="price" type="number" step="0.01" min="0" value="0">
+          <label>Precio mayoreo (opcional)</label><input name="wholesale_price" type="number" step="0.01" min="0" placeholder="Sin configurar">
+          <label>Cantidad mínima mayoreo por artículo</label><input name="wholesale_min_qty" type="number" min="1" step="1" value="10">
+          <label>Costo</label><input name="cost" type="number" step="0.01" min="0" value="0">
+          <label>Stock mínimo</label><input name="min_stock" type="number" min="0" value="5">
+          <label>Descripción</label><textarea name="description" rows="2"></textarea>
+          <button class="btn primary" type="submit">Guardar producto</button>
+        </form>
+      </details>
+      <details class="dropdown-panel"><summary class="btn subtle">+ Categoría</summary>
+        <form method="post" action="{% url 'inventory_action' %}" class="quick-form">
+          {% csrf_token %}<input type="hidden" name="action" value="category"><input type="hidden" name="return_to" value="productos">
+          <label>Nombre de categoría</label><input name="name" maxlength="90" required>
+          <button class="btn primary" type="submit">Crear categoría</button>
+        </form>
+      </details>
+    {% endif %}
+    {% if can_move %}<a class="btn subtle" href="{% url 'home' %}?seccion=movimientos">⇆ Registrar movimiento</a> <a class="btn primary" href="{% url 'home' %}?seccion=ventas">▣ Nueva venta</a>{% endif %}
+  </div>
+  <form class="filter-bar" method="get">
+    <input type="hidden" name="seccion" value="productos">
+    <label class="sr-only" for="prod-q">Buscar producto</label>
+    <input id="prod-q" type="search" name="q" value="{{ search_query }}" placeholder="Buscar código, nombre o marca...">
+    
+    <label class="low-filter"><input type="checkbox" name="solo_bajo" value="1" {% if low_only %}checked{% endif %}> <span class="alert-dot" aria-hidden="true"></span> Solo stock bajo</label>
+    <button class="btn subtle" type="submit">Filtrar</button>
+  </form>
+  <section class="panel-block">
+    <div class="panel-title"><h2>Catálogo de productos</h2><span class="pill">Hasta 200 resultados</span></div>
+    <div class="table-scroll">
+      <table class="users-table inventory-table">
+        <thead><tr><th>Código</th><th>Producto · desplegar ubicaciones</th><th>Categoría</th><th>Precio</th><th>Existencias</th><th>Estado de stock</th><th></th></tr></thead>
+        <tbody>
+          {% for item in products %}
+            <tr class="product-overview {% if item.has_alert %}row-alert{% endif %}">
+              <td><strong>{{ item.product.sku }}</strong>{% if item.product.is_demo %}<small class="demo-tag">DEMO</small>{% endif %}</td>
+              <td>
+                <details class="product-toggle">
+                  <summary>
+                    <strong>{{ item.product.name }}</strong>
+                    {% if item.has_alert %}<span class="alert-dot" aria-label="Alerta de stock en alguna sucursal" title="Hay al menos una sucursal con stock bajo"></span>{% endif %}
+                    <span class="expand-cue">Ver ubicaciones ▾</span>
+                  </summary>
+                </details>
+                <span class="account-detail">{{ item.product.brand }} · {{ item.product.unit }}</span>
+              </td>
+              <td>{{ item.product.category.name|default:"—" }}</td>
+              <td>${{ item.product.price|floatformat:2 }}</td>
+              <td><strong>{{ item.product.total_qty }}</strong></td>
+              <td>
+                {% if item.has_alert %}
+                  <span class="status-label inactive"><span class="alert-dot" aria-hidden="true"></span> {{ item.low_count }} {% if item.low_count == 1 %}alerta{% else %}alertas{% endif %}</span>
+                {% else %}
+                  <span class="status-label active">Sin alertas</span>
+                {% endif %}
+              </td>
+              <td>{% if can_manage_catalog %}
+                <button class="btn subtle" type="button" onclick="document.getElementById('fermo-edit-{{ item.product.pk }}').showModal()">Editar</button>
+                <dialog class="catalog-edit-dialog" id="fermo-edit-{{ item.product.pk }}" aria-label="Editar {{ item.product.sku }}">
+                  <div class="catalog-dialog-heading"><h3>Modificar producto · {{ item.product.sku }}</h3><button class="btn subtle" type="button" onclick="this.closest('dialog').close()" aria-label="Cerrar formulario">✕</button></div>
+                  <div class="actions-panel catalog-editor">
+                    <h3>Modificar producto</h3>
+                    <form method="post" action="{% url 'inventory_action' %}" class="small-form">
+                      {% csrf_token %}<input type="hidden" name="action" value="edit_product"><input type="hidden" name="return_to" value="productos"><input type="hidden" name="product_id" value="{{ item.product.pk }}">
+                      <label>Código</label><input name="sku" value="{{ item.product.sku }}" required>
+                      <label>Nombre</label><input name="name" value="{{ item.product.name }}" required>
+                      <label>Categoría</label><select name="category"><option value="">Sin categoría</option>{% for cat in categories %}<option value="{{ cat.pk }}" {% if item.product.category_id == cat.pk %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}</select>
+                      <label>Marca</label><input name="brand" value="{{ item.product.brand }}">
+                      <label>Unidad</label><input name="unit" value="{{ item.product.unit }}" required>
+                      <label>Precio menudeo</label><input type="number" name="price" value="{{ item.product.price }}" min="0" step="0.01" required>
+                      <label>Precio mayoreo</label><input type="number" name="wholesale_price" value="{{ item.product.wholesale_price|default_if_none:'' }}" min="0" step="0.01" placeholder="Sin configurar">
+                      <label>Mínimo de unidades para mayoreo</label><input type="number" name="wholesale_min_qty" value="{{ item.product.wholesale_min_qty }}" min="1" required>
+                      <label>Costo</label><input type="number" name="cost" value="{{ item.product.cost }}" min="0" step="0.01" required>
+                      <label>Stock mínimo</label><input type="number" name="min_stock" value="{{ item.product.min_stock }}" min="0">
+                      <label>Descripción</label><textarea name="description" rows="2">{{ item.product.description }}</textarea>
+                      <button class="btn primary" type="submit">Guardar cambios</button>
+                    </form>
+                  </div>
+                </dialog>
+              {% endif %}</td>
+            </tr>
+            <tr class="product-detail-row">
+              <td colspan="7">
+                <div class="product-detail-panel">
+                  <div class="detail-heading">
+                    <strong>Existencias y ubicación de {{ item.product.name }}</strong>
+                    <small>{% if selected_branch %}Detalle de la sucursal seleccionada{% else %}Todas las sucursales · la alerta se calcula individualmente{% endif %}</small>
+                  </div>
+                  <div class="product-store-grid">
+                    {% for store in item.stores %}
+                      <div class="product-store-card {% if store.low %}store-low{% endif %}">
+                        <div class="store-card-heading">
+                          <strong>{% if store.low %}<span class="alert-dot" aria-hidden="true"></span>{% endif %} {{ store.branch_name }}</strong>
+                          {% if store.empty %}<span class="status-label inactive">Agotado</span>{% elif store.low %}<span class="status-label inactive">Reponer</span>{% else %}<span class="status-label active">Correcto</span>{% endif %}
+                        </div>
+                        <p class="store-count">{{ store.quantity }} <span>unidades · mínimo {{ store.minimum }}</span></p>
+                        <div class="location-list">
+                          {% for place in store.locations %}
+                            <div class="location-entry"><span>⌖ {{ place.name }}{% if place.description %}<small>{{ place.description }}</small>{% endif %}</span><strong>{{ place.quantity }} uds.</strong></div>
+                          {% empty %}
+                            <div class="location-entry no-location">Sin unidades registradas en esta sucursal</div>
+                          {% endfor %}
+                        </div>
+                        {% if can_manage_catalog %}
+                          <form class="minimum-form" method="post" action="{% url 'inventory_action' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="store_minimum">
+                            <input type="hidden" name="return_to" value="productos">
+                            <input type="hidden" name="product_id" value="{{ item.product.pk }}">
+                            <input type="hidden" name="branch_id" value="{{ store.branch_id }}">
+                            <label for="min-{{ item.product.pk }}-{{ store.branch_id }}">Mínimo de esta sucursal</label>
+                            <div class="min-input-row">
+                              <input id="min-{{ item.product.pk }}-{{ store.branch_id }}" type="number" min="0" step="1" name="minimum" value="{% if store.custom_minimum %}{{ store.minimum }}{% endif %}" placeholder="{{ item.product.min_stock }}" aria-label="Mínimo para {{ item.product.name }} en {{ store.branch_name }}">
+                              <button type="submit" class="btn subtle">Guardar</button>
+                            </div>
+                            <small>{% if store.custom_minimum %}Personalizado; vacía el campo para usar el mínimo general.{% else %}Sin personalizar: aplica el mínimo general ({{ item.product.min_stock }}).{% endif %}</small>
+                          </form>
+                        {% endif %}
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7">No hay productos que coincidan con los filtros.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+{% elif active_section == 'sucursales' %}
+  <div class="eyebrow">OPERACIÓN CENTRALIZADA</div>
+  <h1>Almacén FERMO</h1>
+  <p class="muted">La distribuidora opera desde un solo almacén. Organiza pasillos, estantes y zonas sin crear sucursales adicionales.</p>
+  {% if can_manage_catalog %}
+    <div class="action-strip">
+      <details class="dropdown-panel"><summary class="btn subtle">+ Nueva ubicación</summary>
+        <form method="post" action="{% url 'inventory_action' %}" class="quick-form">
+          {% csrf_token %}<input type="hidden" name="action" value="location"><input type="hidden" name="return_to" value="sucursales">
+          <label>Almacén FERMO</label><select name="branch" required>{% for branch in branches %}<option value="{{ branch.pk }}">{{ branch.name }}</option>{% endfor %}</select>
+          <label>Estante, repisa o zona</label><input name="code" maxlength="70" placeholder="Pasillo C · Estante 2" required>
+          <label>Descripción</label><input name="description" maxlength="160">
+          <button class="btn primary" type="submit">Guardar ubicación</button>
+        </form>
+      </details>
+    </div>
+  {% endif %}
+  <section class="cards branch-cards">
+    {% for branch in branch_rows %}
+      <article class="metric">
+        <span>{{ branch.code }} {% if branch.is_demo %}<em class="demo-tag">DEMO</em>{% endif %}</span>
+        <h2>{{ branch.name }} {% if branch.low_count %}<span class="alert-dot" aria-label="Stock bajo"></span>{% endif %}</h2>
+        <strong>{{ branch.units }} <small>uds.</small></strong>
+        {% if branch.low_count %}<span class="status-label inactive">{{ branch.low_count }} productos para reponer · {{ branch.empty_count }} agotados</span>{% else %}<span class="status-label active">Sin alertas</span>{% endif %}
+        <small>{{ branch.location_count }} ubicaciones · {{ branch.address|default:"Sin dirección registrada" }}</small>
+        <a class="text-link" href="{% url 'home' %}?seccion=productos&amp;sucursal={{ branch.pk }}">Consultar inventario →</a>
+      </article>
+    {% empty %}<p class="muted">El almacén aún no está inicializado.</p>{% endfor %}
+  </section>
+  <section class="panel-block">
+    <div class="panel-title"><h2>Mapa de ubicaciones</h2><span class="pill">Repisa, zona o pasillo</span></div>
+    <div class="table-scroll"><table class="users-table">
+      <thead><tr><th>Almacén</th><th>Ubicación</th><th>Descripción</th></tr></thead>
+      <tbody>{% for place in location_rows %}
+        <tr><td>{{ place.branch.name }}</td><td><strong>{{ place.code }}</strong></td><td>{{ place.description|default:"—" }}</td></tr>
+      {% empty %}<tr><td colspan="3">Aún no hay ubicaciones registradas.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+
+{% elif active_section == 'movimientos' %}
+  <div class="eyebrow">CONTROL DE EXISTENCIAS</div>
+  <h1>Entradas, salidas y ajustes</h1>
+  <p class="muted">Todo cambio genera un movimiento firmado con el usuario y la fecha. Nunca editamos las existencias sin dejar registro.</p>
+  {% if can_move %}<div class="sale-shortcut"><span>Para vender varios artículos con cliente, folio, precio mayoreo/menudeo y Word, utiliza <strong>Ventas y órdenes</strong>.</span> <a class="btn primary" href="{% url 'home' %}?seccion=ventas">+ Nueva venta</a></div>{% endif %}
+  {% if can_move %}
+    <div class="module-grid">
+      <section class="panel-block">
+        <h2>Registrar movimiento</h2>
+        <form class="quick-form" method="post" action="{% url 'inventory_action' %}">
+          {% csrf_token %}<input type="hidden" name="action" value="stock"><input type="hidden" name="return_to" value="movimientos">
+          <label>Tipo de movimiento</label><select name="kind" required>{% for val, label in movement_kinds %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
+          <label>Producto</label><select name="product_id" required>{% for product in available_products %}<option value="{{ product.pk }}">{{ product.sku }} — {{ product.name }}</option>{% endfor %}</select>
+          <label>Almacén y ubicación</label><select name="location_id" required>{% for loc in locations %}<option value="{{ loc.pk }}">{{ loc.branch.name }} / {{ loc.code }}</option>{% endfor %}</select>
+          <label>Cantidad de unidades</label><input name="quantity" type="number" min="0" step="1" required>
+          <p class="form-hint">Para ENTRADA o SALIDA, escribe unidades a mover. Para AJUSTE, escribe la cantidad final que deberá quedar.</p>
+          <label>Motivo o referencia</label><textarea name="note" rows="2" maxlength="255" placeholder="Recepción, venta, devolución, ajuste por conteo..."></textarea>
+          <button class="btn primary" type="submit">Guardar movimiento</button>
+        </form>
+      </section>
+      <section class="panel-block">
+        <h2>Trasladar entre ubicaciones</h2>
+        <form class="quick-form" method="post" action="{% url 'inventory_action' %}">
+          {% csrf_token %}<input type="hidden" name="action" value="transfer"><input type="hidden" name="return_to" value="movimientos">
+          <label>Producto</label><select name="product_id" required>{% for product in available_products %}<option value="{{ product.pk }}">{{ product.sku }} — {{ product.name }}</option>{% endfor %}</select>
+          <label>Origen</label><select name="origin_id" required>{% for loc in locations %}<option value="{{ loc.pk }}">{{ loc.branch.name }} / {{ loc.code }}</option>{% endfor %}</select>
+          <label>Destino</label><select name="destination_id" required>{% for loc in locations %}<option value="{{ loc.pk }}">{{ loc.branch.name }} / {{ loc.code }}</option>{% endfor %}</select>
+          <label>Cantidad</label><input name="quantity" type="number" min="1" step="1" required>
+          <label>Nota</label><textarea name="note" rows="2" maxlength="255" placeholder="Motivo del traslado"></textarea>
+          <button class="btn primary" type="submit">Registrar traslado</button>
+          <p class="form-hint">Traslado directo para pruebas. La confirmación de recepción y la mercancía en tránsito se añadirán después.</p>
+        </form>
+      </section>
+    </div>
+  {% else %}
+    <div class="notice info">Tu cuenta puede consultar, pero no tiene permiso para modificar existencias.</div>
+  {% endif %}
+  <form method="get" class="filter-bar">
+    <input type="hidden" name="seccion" value="movimientos">
+    
+    <button class="btn subtle" type="submit">Ver existencias</button>
+  </form>
+  <section class="panel-block">
+    <div class="panel-title"><h2>Existencias por ubicación</h2><span class="pill">Stock actual</span></div>
+    <div class="table-scroll"><table class="users-table">
+      <thead><tr><th>SKU</th><th>Producto</th><th>Sucursal</th><th>Ubicación</th><th>Disponible</th></tr></thead>
+      <tbody>{% for stock in stock_rows %}
+        <tr><td>{{ stock.product.sku }}</td><td>{{ stock.product.name }}</td><td>{{ stock.location.branch.name }}</td><td>{{ stock.location.code }}</td><td><strong>{{ stock.quantity }}</strong></td></tr>
+      {% empty %}<tr><td colspan="5">Todavía no hay existencias registradas.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+
+{% elif active_section == 'historial' %}
+  <div class="eyebrow">TRAZABILIDAD Y AUDITORÍA</div>
+  <h1>Historial de movimientos</h1>
+  <p class="muted">Consulta quién movió cada artículo del almacén FERMO, fecha, cantidad anterior y existencia final. Los datos de la simulación antigua se conservan archivados.</p>
+  <form method="get" class="filter-bar history-filters">
+    <input type="hidden" name="seccion" value="historial">
+    {% if user.is_superuser %}<label class="low-filter"><input type="checkbox" name="archivados" value="1" {% if history_archived %}checked{% endif %}> Incluir DEMO históricos archivados</label>{% endif %}
+    <input type="search" name="q" value="{{ history_query }}" placeholder="Producto o código">
+    <select name="sucursal"><option value="">Todas las sucursales</option>{% for branch in branches %}<option value="{{ branch.pk }}" {% if selected_branch.pk == branch.pk %}selected{% endif %}>{{ branch.name }}</option>{% endfor %}</select>
+    <select name="usuario"><option value="">Todos los usuarios</option>{% for u in history_users %}<option value="{{ u.pk }}" {% if history_user == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select>
+    <select name="tipo"><option value="">Todos los movimientos</option>{% for val, label in history_types %}<option value="{{ val }}" {% if history_kind == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <label class="date-label">Desde<input type="date" name="desde" value="{{ history_start }}"></label>
+    <label class="date-label">Hasta<input type="date" name="hasta" value="{{ history_end }}"></label>
+    <button class="btn primary" type="submit">Aplicar filtros</button>
+    <a class="btn subtle" href="{% url 'home' %}?seccion=historial">Limpiar</a>
+  </form>
+  <section class="panel-block">
+    <div class="panel-title"><h2>Movimientos registrados</h2><span class="pill">Últimos 250 resultados filtrados</span></div>
+    <div class="table-scroll"><table class="users-table inventory-table">
+      <thead><tr><th>Fecha / hora</th><th>Usuario</th><th>Operación</th><th>Producto</th><th>Ubicación</th><th>Cambio</th><th>Antes</th><th>Después</th><th>Nota</th></tr></thead>
+      <tbody>{% for move in history_rows %}
+        <tr>
+          <td class="no-wrap">{{ move.created_at|date:"d/m/Y H:i:s" }}</td>
+          <td><strong>{{ move.actor.username }}</strong></td>
+          <td>{{ move.get_kind_display }}</td>
+          <td><strong>{{ move.product.sku }}</strong><small class="account-detail">{{ move.product.name }}</small></td>
+          <td>{{ move.location.branch.name }}<small class="account-detail">{{ move.location.code }}</small></td>
+          <td><strong class="{% if move.delta < 0 %}text-negative{% else %}text-positive{% endif %}">{{ move.delta|stringformat:"+d" }}</strong></td>
+          <td>{{ move.before }}</td><td>{{ move.after }}</td>
+          <td>{{ move.note|default:"—" }}{% if move.reference %}<small class="account-detail">{{ move.reference }}</small>{% endif %}</td>
+        </tr>
+      {% empty %}<tr><td colspan="9">No hay movimientos que coincidan con los filtros.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+{% endif %}
