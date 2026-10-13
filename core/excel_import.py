@@ -127,11 +127,11 @@ def import_excel(*, upload, actor):
     created = 0
     movements = 0
     for item in data:
-        warehouse = Branch.objects.filter(code="FERMO-ALMACEN", is_active=True).first()
+        warehouse = Branch.objects.filter(code="AGRO-ALMACEN", is_active=True).first()
         if warehouse is not None:
             if item["branch"].casefold() not in {warehouse.name.casefold(), warehouse.code.casefold()}:
                 raise ValidationError(
-                    "Excel: utiliza únicamente Almacén FERMO en la columna sucursal. "
+                    "Excel: utiliza únicamente Almacén principal en la columna sucursal. "
                     "No se permiten nuevas tiendas."
                 )
             branch = warehouse
